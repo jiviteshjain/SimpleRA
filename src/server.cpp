@@ -3,8 +3,8 @@
 
 using namespace std;
 
-float BLOCK_SIZE = 1;
-uint BLOCK_COUNT = 2;
+float BLOCK_SIZE = 8;
+uint BLOCK_COUNT = 16;
 uint PRINT_COUNT = 20;
 Logger logger;
 vector<string> tokenizedQuery;
