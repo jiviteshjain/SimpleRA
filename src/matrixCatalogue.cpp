@@ -29,7 +29,7 @@ bool MatrixCatalogue::isMatrix(string matrixName)
 void MatrixCatalogue::print()
 {
     logger.log("MatrixCatalogue::print"); 
-    cout << "\nRELATIONS" << endl;
+    cout << "\nMATRICES" << endl;
 
     int rowCount = 0;
     for (auto rel : this->matrices)
