@@ -43,8 +43,6 @@ bool semanticParseLOADMATRIX()
 void executeLOADMATRIX()
 {
     logger.log("executeLOADMATRIX");
-
-    std::cout << "Executing load matrix" << endl;
     Matrix *matrix = new Matrix(parsedQuery.loadMatrixName);
     if (matrix->load())
     {
