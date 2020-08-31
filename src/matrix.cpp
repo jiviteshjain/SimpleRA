@@ -112,3 +112,43 @@ void Matrix::initCalc(const string& line) {
     this->dimension = count;
     this->blockCount = ceil((double)this->dimension/(double)MATRIX_PAGE_DIM);
 }
+
+void Matrix::transpose()
+{
+    for (int rowIndex = 0; rowIndex < this->blockCount; rowIndex++)
+    {
+        for (int colIndex = rowIndex + 1; colIndex < this->blockCount; colIndex++)
+        {
+            Page currentPage = bufferManager.getMatrixPage(this->matrixName, rowIndex, colIndex);
+            vector<vector<int>> currentMatrix = currentPage.getMatrix();
+
+            Page swapPage = bufferManager.getMatrixPage(this->matrixName, colIndex, rowIndex);
+            vector<vector<int>> swapMatrix = swapPage.getMatrix();
+
+            // transposing inside the matrices
+            for (int i = 0; i < MATRIX_PAGE_DIM; i++)
+                for (int j = i + 1; j < MATRIX_PAGE_DIM; j++)
+                {
+                    swap(currentMatrix[i][j], currentMatrix[j][i]);
+                    swap(swapMatrix[i][j], swapMatrix[j][i]);
+                }
+
+            bufferManager.writeMatrixPage(this->matrixName, rowIndex, colIndex, swapMatrix);
+            bufferManager.writeMatrixPage(this->matrixName, colIndex, rowIndex, currentMatrix);
+        }
+    }
+
+    // for blocks on diagonal
+    for (int rowIndex = 0; rowIndex < this->blockCount; rowIndex++)
+    {
+        Page currentPage = bufferManager.getMatrixPage(this->matrixName, rowIndex, rowIndex);
+        vector<vector<int>> currentMatrix = currentPage.getMatrix();
+        
+        // transposing inside the matrix
+        for (int i = 0; i < MATRIX_PAGE_DIM; i++)
+            for (int j = i + 1; j < MATRIX_PAGE_DIM; j++)
+                swap(currentMatrix[i][j], currentMatrix[j][i]);
+        
+        bufferManager.writeMatrixPage(this->matrixName, rowIndex, rowIndex, currentMatrix);
+    }
+}
