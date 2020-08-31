@@ -30,6 +30,13 @@
 *.exe
 *.out
 *.app
+src/server
 
 # Editor Files
 .vscode
+
+# Data
+data/temp/**
+
+# Log
+src/log
