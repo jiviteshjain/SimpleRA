@@ -98,3 +98,66 @@ void Page::writePage()
     }
     fout.close();
 }
+
+
+Page::Page(const string& matrixName, int rowIndex, int colIndex) {
+    logger.log("Page::Page");
+    
+    this->type = MATRIX;
+    this->matrixName = matrixName;
+    this->rowIndex = rowIndex;
+    this->colIndex = colIndex;
+    this->pageName = "../data/temp/" + this->tableName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
+
+    this->matrix.resize(MATRIX_PAGE_DIM);
+    fill(this->matrix.begin(), this->matrix.end(), vector<int> (MATRIX_PAGE_DIM, -1));
+
+    ifstream fin(this->pageName, ios::in);
+    for (int i = 0; i < MATRIX_PAGE_DIM; i++) {
+        for (int j = 0; j < MATRIX_PAGE_DIM; j++) {
+            int temp;
+            fin >> temp;
+            this->matrix[i][j] = temp; // -1's are also filled
+        }
+    }
+}
+
+Page::Page(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data) {
+    logger.log("Page::Page");
+    
+    this->type = MATRIX;
+    this->matrixName = matrixName;
+    this->rowIndex = rowIndex;
+    this->colIndex = colIndex;
+    this->pageName = "../data/temp/" + this->tableName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
+    
+    this->matrix = data;
+}
+
+vector<vector<int>> Page::getMatrix() {
+    logger.log("Page::getMatrix");
+
+    if (this->type != MATRIX) {
+        return vector<vector<int>> (0);
+    }
+    return this->matrix;
+}
+
+bool Page::writeMatrixPage() {
+    if (this->type != MATRIX) {
+        return false;
+    }
+
+    ofstream fout(this->pageName, ios::trunc);
+    for (int i = 0; i < MATRIX_PAGE_DIM; i++) {
+        for (int j = 0; j < MATRIX_PAGE_DIM; j++) {
+            fout << this->matrix[i][j];
+            if (j != MATRIX_PAGE_DIM - 1) {
+                fout << " ";
+            }
+        }
+        fout << endl;
+    }
+    fout.close();
+    return true;
+}

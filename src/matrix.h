@@ -1,3 +1,6 @@
+#ifndef __MATRIX_H
+#define __MATRIX_H
+
 #include "cursor.h"
 
 /**
@@ -32,3 +35,5 @@ class Matrix {
 };
 
 int MATRIX_PAGE_DIM;
+
+#endif

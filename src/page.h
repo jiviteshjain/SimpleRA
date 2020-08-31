@@ -1,4 +1,5 @@
 #include"logger.h"
+#include "matrix.h"
 /**
  * @brief The Page object is the main memory representation of a physical page
  * (equivalent to a block). The page class and the page.h header file are at the
@@ -10,6 +11,11 @@
  *</p>
  */
 
+enum DataType {
+    TABLE,
+    MATRIX
+};
+
 class Page{
 
     string tableName;
@@ -18,7 +24,14 @@ class Page{
     int rowCount;
     vector<vector<int>> rows;
 
+    string matrixName;
+    int rowIndex;
+    int colIndex;
+    vector<vector<int>> matrix;
+
     public:
+
+    DataType type = TABLE;
 
     string pageName = "";
     Page();
@@ -26,4 +39,9 @@ class Page{
     Page(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount);
     vector<int> getRow(int rowIndex);
     void writePage();
+
+    Page(const string& matrixName, int rowIndex, int colIndex);
+    Page(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data);
+    vector<vector<int>> getMatrix();
+    bool writeMatrixPage();
 };
