@@ -43,12 +43,13 @@ bool semanticParseLOADMATRIX()
 void executeLOADMATRIX()
 {
     logger.log("executeLOADMATRIX");
+
     std::cout << "Executing load matrix" << endl;
-    // Matrix *matrix = new Matrix(parsedQuery.loadRelationName);
-    // if (matrix->load())
-    // {
-    //     matrixCatalogue.insertMatrix(matrix);
-    //     cout << "Loaded Matrix. Column/row Count: " << matrix->dimension << endl;
-    // }
+    Matrix *matrix = new Matrix(parsedQuery.loadRelationName);
+    if (matrix->load())
+    {
+        matrixCatalogue.insertMatrix(matrix);
+        cout << "Loaded Matrix. Column/row Count: " << matrix->dimension << endl;
+    }
     return;
 }

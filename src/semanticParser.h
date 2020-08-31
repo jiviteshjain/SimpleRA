@@ -1,3 +1,6 @@
+#ifndef __SEMANTICPARSER_H
+#define __SEMANTICPARSER_H
+
 #include"syntacticParser.h"
 
 bool semanticParse();
@@ -17,3 +20,5 @@ bool semanticParseRENAME();
 bool semanticParseSELECTION();
 bool semanticParseSORT();
 bool semanticParseSOURCE();
+
+#endif

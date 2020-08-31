@@ -1,3 +1,6 @@
+#ifndef __CURSOR_H
+#define __CURSOR_H
+
 #include"bufferManager.h"
 /**
  * @brief The cursor is an important component of the system. To read from a
@@ -17,3 +20,5 @@ class Cursor{
     vector<int> getNext();
     void nextPage(int pageIndex);
 };
+
+#endif

@@ -1,5 +1,7 @@
+#ifndef __PAGE_H
+#define __PAGE_H
+
 #include"logger.h"
-#include "matrix.h"
 /**
  * @brief The Page object is the main memory representation of a physical page
  * (equivalent to a block). The page class and the page.h header file are at the
@@ -45,3 +47,5 @@ class Page{
     vector<vector<int>> getMatrix();
     bool writeMatrixPage();
 };
+
+#endif

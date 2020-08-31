@@ -1,3 +1,6 @@
+#ifndef __GLOBAL_H
+#define __GLOBAL_H
+
 #include"executor.h"
 #include "utils.h"
 
@@ -9,3 +12,6 @@ extern ParsedQuery parsedQuery;
 extern TableCatalogue tableCatalogue;
 extern MatrixCatalogue matrixCatalogue;
 extern BufferManager bufferManager;
+extern int MATRIX_PAGE_DIM;
+
+#endif

@@ -1,7 +1,7 @@
 #ifndef __MATRIX_H
 #define __MATRIX_H
 
-#include "cursor.h"
+#include "bufferManager.h"
 
 /**
  * @brief The Table class holds all information related to a loaded table. It
@@ -30,10 +30,8 @@ class Matrix {
     bool load();
     void makePermanent();
     bool isPermanent();
-    void unload();
+    void unload() {}
     void transpose();
 };
-
-int MATRIX_PAGE_DIM;
 
 #endif

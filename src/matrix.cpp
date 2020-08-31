@@ -1,8 +1,6 @@
 #include "global.h"
 #include "matrix.h"
 
-int MATRIX_PAGE_DIM = (int)sqrt((BLOCK_SIZE * 1024) / sizeof(int));
-
 Matrix::Matrix() {
     logger.log("Matrix::Matrix");
 }
@@ -77,13 +75,13 @@ bool Matrix::blockify() {
         string line;
         while (getline(fin, line)) {
             if (in_this_block == MATRIX_PAGE_DIM) {
-                block_i++;
-                in_this_block = 0;
 
-                // store this vector as page
+                bufferManager.writeMatrixPage(this->matrixName, block_i, block_j, this_page);
 
                 // clear the vector
                 this_page.assign(MATRIX_PAGE_DIM, vector<int> (MATRIX_PAGE_DIM, -1));
+                block_i++;
+                in_this_block = 0;
             }
 
             this_page[in_this_block] = this->readLine(line, block_j);
@@ -91,7 +89,7 @@ bool Matrix::blockify() {
         }
 
         // rest of the last page is already -1
-        // store last vector as a page
+        bufferManager.writeMatrixPage(this->matrixName, block_i, block_j, this_page);
 
 
         fin.close();

@@ -10,7 +10,9 @@ Logger logger;
 vector<string> tokenizedQuery;
 ParsedQuery parsedQuery;
 TableCatalogue tableCatalogue;
+MatrixCatalogue matrixCatalogue;
 BufferManager bufferManager;
+int MATRIX_PAGE_DIM;
 
 void doCommand()
 {
@@ -27,7 +29,9 @@ int main(void)
     string command;
     system("rm -rf ../data/temp");
     system("mkdir ../data/temp");
-
+    
+    MATRIX_PAGE_DIM = (int)sqrt((BLOCK_SIZE * 1024) / sizeof(int));
+    
     while(!cin.eof())
     {
         cout << "\n> ";

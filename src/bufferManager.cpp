@@ -23,6 +23,17 @@ Page BufferManager::getPage(string tableName, int pageIndex)
         return this->insertIntoPool(tableName, pageIndex);
 }
 
+Page BufferManager::getMatrixPage(const string& matrixName, int rowIndex, int colIndex) {
+    logger.log("BufferManager::getMatrixPage");
+
+    string pageName = "../data/temp/" + matrixName + "_Page_" + to_string(rowIndex) + "_" + to_string(colIndex);
+    if (this->inPool(pageName)) {
+        return this->getFromPool(pageName);
+    } else {
+        return this->insertIntoPool(matrixName, rowIndex, colIndex);
+    }
+}
+
 /**
  * @brief Checks to see if a page exists in the pool
  *
@@ -76,6 +87,16 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex)
     return page;
 }
 
+Page BufferManager::insertIntoPool(const string& matrixName, int rowIndex, int colIndex) {
+    logger.log("BufferManager::insertIntoPool");
+    
+    Page page(matrixName, rowIndex, colIndex);
+    if (this->pages.size() >= BLOCK_COUNT)
+        this->pages.pop_front();
+    this->pages.push_back(page);
+    return page;
+}
+
 /**
  * @brief The buffer manager is also responsible for writing pages. This is
  * called when new tables are created using assignment statements.
@@ -90,6 +111,12 @@ void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int
     logger.log("BufferManager::writePage");
     Page page(tableName, pageIndex, rows, rowCount);
     page.writePage();
+}
+
+void BufferManager::writeMatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data) {
+    logger.log("BufferManager::writeMatrixPage");
+    Page page(matrixName, rowIndex, colIndex, data);
+    page.writeMatrixPage();
 }
 
 /**

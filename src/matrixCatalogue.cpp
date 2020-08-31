@@ -2,7 +2,7 @@
 
 void MatrixCatalogue::insertMatrix(Matrix* matrix)
 {
-    logger.log("MatrixCatalogue::~insertMatrix"); 
+    logger.log("MatrixCatalogue::insertMatrix"); 
     this->matrices[matrix->matrixName] = matrix;
 }
 void MatrixCatalogue::deleteMatrix(string matrixName)
@@ -23,18 +23,6 @@ bool MatrixCatalogue::isMatrix(string matrixName)
     logger.log("MatrixCatalogue::isMatrix"); 
     if (this->matrices.count(matrixName))
         return true;
-    return false;
-}
-
-bool MatrixCatalogue::isColumnFromMatrix(string columnName, string matrixName)
-{
-    logger.log("MatrixCatalogue::isColumnFromMatrix"); 
-    if (this->isMatrix(matrixName))
-    {
-        Matrix* matrix = this->getMatrix(matrixName);
-        if (matrix->isColumn(columnName))
-            return true;
-    }
     return false;
 }
 

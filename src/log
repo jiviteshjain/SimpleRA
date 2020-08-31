@@ -1,0 +1,20 @@
+BufferManager::BufferManager
+ParseQuery::clear
+
+Reading New Command: 
+LOAD MATRIX TEST
+doCommand
+syntacticParse
+syntacticParseLOADMATRIX
+semanticParse
+semanticParseLOADMATRIX
+executeLOADMATRIX
+Matrix::Matrix
+Matrix::load
+Matrix::blockify
+ParseQuery::clear
+
+Reading New Command: 
+
+MatrixCatalogue::~MatrixCatalogue
+TableCatalogue::~TableCatalogue

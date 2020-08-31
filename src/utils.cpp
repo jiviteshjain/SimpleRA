@@ -1,6 +1,6 @@
 #include "global.h"
 
-string trim(const string& str, const string& whitespace = " \t") {
+string trim(const string& str, const string& whitespace) {
     const auto strBegin = str.find_first_not_of(whitespace);
     if (strBegin == std::string::npos)
         return "";  // no content
