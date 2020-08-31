@@ -107,7 +107,7 @@ Page::Page(const string& matrixName, int rowIndex, int colIndex) {
     this->matrixName = matrixName;
     this->rowIndex = rowIndex;
     this->colIndex = colIndex;
-    this->pageName = "../data/temp/" + this->tableName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
+    this->pageName = "../data/temp/" + this->matrixName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
 
     this->matrix.resize(MATRIX_PAGE_DIM);
     fill(this->matrix.begin(), this->matrix.end(), vector<int> (MATRIX_PAGE_DIM, -1));
@@ -129,7 +129,7 @@ Page::Page(const string& matrixName, int rowIndex, int colIndex, const vector<ve
     this->matrixName = matrixName;
     this->rowIndex = rowIndex;
     this->colIndex = colIndex;
-    this->pageName = "../data/temp/" + this->tableName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
+    this->pageName = "../data/temp/" + this->matrixName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
     
     this->matrix = data;
 }
