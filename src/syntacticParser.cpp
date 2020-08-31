@@ -17,15 +17,20 @@ bool syntacticParse()
         return syntacticParseINDEX();
     else if (possibleQueryType == "LIST")
         return syntacticParseLIST();
+    else if (possibleQueryType == "LOAD" && tokenizedQuery[1] == "MATRIX")
+    {
+        // std::cout << "THIS WORKED!" << endl;
+        return syntacticParseLOADMATRIX();
+    }
     else if (possibleQueryType == "LOAD")
         return syntacticParseLOAD();
     else if (possibleQueryType == "PRINT")
         return syntacticParsePRINT();
     else if (possibleQueryType == "RENAME")
         return syntacticParseRENAME();
-    else if(possibleQueryType == "EXPORT")
+    else if (possibleQueryType == "EXPORT")
         return syntacticParseEXPORT();
-    else if(possibleQueryType == "SOURCE")
+    else if (possibleQueryType == "SOURCE")
         return syntacticParseSOURCE();
     else
     {
