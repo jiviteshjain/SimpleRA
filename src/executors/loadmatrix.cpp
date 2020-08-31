@@ -19,11 +19,11 @@ bool syntacticParseLOADMATRIX()
 bool semanticParseLOADMATRIX()
 {
     logger.log("semanticParseLOADMATRIX");
-    // if (matrixCatalogue.isMatrix(parsedQuery.loadMatrixName))
-    // {
-    //     cout << "SEMANTIC ERROR: Matrix already exists" << endl;
-    //     return false;
-    // }
+    if (matrixCatalogue.isMatrix(parsedQuery.loadMatrixName))
+    {
+        cout << "SEMANTIC ERROR: Matrix already exists" << endl;
+        return false;
+    }
 
     if (!isFileExists(parsedQuery.loadMatrixName))
     {
