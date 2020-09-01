@@ -3,7 +3,7 @@
 
 #include "bufferManager.h"
 
-#define ROWS_AT_ONCE 9
+#define ROWS_AT_ONCE 5
 
 /**
  * @brief The Table class holds all information related to a loaded table. It
