@@ -18,10 +18,7 @@ bool syntacticParse()
     else if (possibleQueryType == "LIST")
         return syntacticParseLIST();
     else if (possibleQueryType == "LOAD" && tokenizedQuery[1] == "MATRIX")
-    {
-        // std::cout << "THIS WORKED!" << endl;
         return syntacticParseLOADMATRIX();
-    }
     else if (possibleQueryType == "LOAD")
         return syntacticParseLOAD();
     else if (possibleQueryType == "PRINT")
