@@ -121,9 +121,7 @@ void Matrix::makePermanent() {
     ofstream fout(this->sourceFileName, ios::trunc);
 
     vector<vector<int>> this_page; // avoid multiple constructor and destructor calls
-    for (long long int i = 0; i < this->dimension; i++) {
-        vector<int> line;
-        line.reserve(this->dimension);
+    for (long long int i = 0; i < this->dimension;) {
 
         long long int j = 0;
         // i and j are indices in large matrix
@@ -131,28 +129,45 @@ void Matrix::makePermanent() {
         int block_i = i / MATRIX_PAGE_DIM;
         int line_in_block = i % MATRIX_PAGE_DIM;
 
+        int can_go_upto = min((long long int)ROWS_AT_ONCE, min((long long int)(this->dimension - i), (long long int)(MATRIX_PAGE_DIM - line_in_block)));
+
+        vector<vector<int>> lines(can_go_upto);
+        for (auto& line : lines) {
+            line.reserve(this->dimension);
+        }
+
         int block_j = 0;
         for (; block_j < this->blockCount - 1; block_j++) {
             this_page = bufferManager.getMatrixPage(this->matrixName, block_i, block_j).getMatrix();
-            line.insert(line.end(), this_page[line_in_block].begin(), this_page[line_in_block].end());
+            
+            for (int k = 0; k < can_go_upto; k++) {
+                lines[k].insert(lines[k].end(), this_page[line_in_block + k].begin(), this_page[line_in_block + k].end());
+            }
+
             j = j + MATRIX_PAGE_DIM;
         }
 
         this_page = bufferManager.getMatrixPage(this->matrixName, block_i, block_j).getMatrix();
-        line.insert(line.end(), this_page[line_in_block].begin(), this_page[line_in_block].begin() + this->dimension - j);
-        this->writeLine(line, fout);
+        for (int k = 0; k < can_go_upto; k++) {
+            lines[k].insert(lines[k].end(), this_page[line_in_block + k].begin(), this_page[line_in_block + k].begin() + this->dimension - j);
+        }
+        this->writeLine(lines, fout);
+        i = i + can_go_upto;
     }
 
     fout.close();
 }
 
-void Matrix::writeLine(const vector<int>& line, ofstream& fout) {
+void Matrix::writeLine(const vector<vector<int>>& lines, ofstream& fout) {
     logger.log("Matrix::writeLine");
 
-    for (long long int j = 0; j < line.size() - 1; j++) {
-        fout << line[j] << ", ";
+    for (auto &line : lines) {
+        for (long long int j = 0; j < line.size() - 1; j++) {
+            fout << line[j] << ",";
+        }
+        fout << line.back() << endl;
     }
-    fout << line.back() << endl;
+    
 }
 void Matrix::transpose()
 {

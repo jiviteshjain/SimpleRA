@@ -3,6 +3,8 @@
 
 #include "bufferManager.h"
 
+#define ROWS_AT_ONCE 9
+
 /**
  * @brief The Table class holds all information related to a loaded table. It
  * also implements methods that interact with the parsers, executors, cursors
@@ -16,7 +18,7 @@ class Matrix {
    private:
     void initCalc(const string& line);
     vector<int> readLine(const string& line, int colNo);
-    void writeLine(const vector<int>& line, ofstream& fout);
+    void writeLine(const vector<vector<int>>& line, ofstream& fout);
 
    public:
     string sourceFileName = "";
