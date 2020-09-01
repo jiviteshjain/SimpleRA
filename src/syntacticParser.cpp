@@ -32,6 +32,8 @@ bool syntacticParse()
         return syntacticParseEXPORT();
     else if (possibleQueryType == "SOURCE")
         return syntacticParseSOURCE();
+    else if (possibleQueryType == "TRANSPOSE")
+        return syntacticParseTRANSPOSE();
     else
     {
         string resultantRelationName = possibleQueryType;

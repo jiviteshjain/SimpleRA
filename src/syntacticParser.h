@@ -23,6 +23,7 @@ enum QueryType
     SELECTION,
     SORT,
     SOURCE,
+    TRANSPOSE,
     UNDETERMINED
 };
 
@@ -82,6 +83,8 @@ public:
     string loadRelationName = "";
     string loadMatrixName = "";
 
+    string transposeMatrixName = ""; 
+
     string printRelationName = "";
 
     string projectionResultRelationName = "";
@@ -127,6 +130,7 @@ bool syntacticParseRENAME();
 bool syntacticParseSELECTION();
 bool syntacticParseSORT();
 bool syntacticParseSOURCE();
+bool syntacticParseTRANSPOSE();
 
 bool isFileExists(string tableName);
 bool isQueryFile(string fileName);
