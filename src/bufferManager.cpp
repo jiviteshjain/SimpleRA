@@ -116,6 +116,14 @@ void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int
 void BufferManager::writeMatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data) {
     logger.log("BufferManager::writeMatrixPage");
     Page page(matrixName, rowIndex, colIndex, data);
+
+    for (auto &p : this->pages) {
+        if (p.pageName == page.pageName) {
+            p = page;
+            break;
+        }
+    }
+
     page.writeMatrixPage();
 }
 
