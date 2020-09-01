@@ -100,6 +100,8 @@ bool Matrix::blockify() {
 }
 
 void Matrix::initCalc(const string& line) {
+    logger.log("Matrix::initCalc");
+    
     int count = 0;
     for (auto& c: line) {
         if (c == ',') {
@@ -113,6 +115,45 @@ void Matrix::initCalc(const string& line) {
     this->blockCount = ceil((double)this->dimension/(double)MATRIX_PAGE_DIM);
 }
 
+void Matrix::makePermanent() {
+    logger.log("Matrix::makePermanent");
+
+    ofstream fout(this->sourceFileName, ios::trunc);
+
+    vector<vector<int>> this_page; // avoid multiple constructor and destructor calls
+    for (long long int i = 0; i < this->dimension; i++) {
+        vector<int> line;
+        line.reserve(this->dimension);
+
+        long long int j = 0;
+        // i and j are indices in large matrix
+        
+        int block_i = i / MATRIX_PAGE_DIM;
+        int line_in_block = i % MATRIX_PAGE_DIM;
+
+        int block_j = 0;
+        for (; block_j < this->blockCount - 1; block_j++) {
+            this_page = bufferManager.getMatrixPage(this->matrixName, block_i, block_j).getMatrix();
+            line.insert(line.end(), this_page[line_in_block].begin(), this_page[line_in_block].end());
+            j = j + MATRIX_PAGE_DIM;
+        }
+
+        this_page = bufferManager.getMatrixPage(this->matrixName, block_i, block_j).getMatrix();
+        line.insert(line.end(), this_page[line_in_block].begin(), this_page[line_in_block].begin() + this->dimension - j);
+        this->writeLine(line, fout);
+    }
+
+    fout.close();
+}
+
+void Matrix::writeLine(const vector<int>& line, ofstream& fout) {
+    logger.log("Matrix::writeLine");
+
+    for (long long int j = 0; j < line.size() - 1; j++) {
+        fout << line[j] << ", ";
+    }
+    fout << line.back() << endl;
+}
 void Matrix::transpose()
 {
     for (int rowIndex = 0; rowIndex < this->blockCount; rowIndex++)

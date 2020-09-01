@@ -16,6 +16,7 @@ class Matrix {
    private:
     void initCalc(const string& line);
     vector<int> readLine(const string& line, int colNo);
+    void writeLine(const vector<int>& line, ofstream& fout);
 
    public:
     string sourceFileName = "";
@@ -29,7 +30,6 @@ class Matrix {
     
     bool load();
     void makePermanent();
-    bool isPermanent();
     void unload() {}
     void transpose();
 };

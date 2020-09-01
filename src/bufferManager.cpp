@@ -153,3 +153,10 @@ void BufferManager::deleteFile(string tableName, int pageIndex)
     string fileName = "../data/temp/"+tableName + "_Page" + to_string(pageIndex);
     this->deleteFile(fileName);
 }
+
+void BufferManager::deleteFile(const string& matrixName, int rowIndex, int colIndex) {
+    logger.log("BufferManager::deleteFile");
+    
+    string fileName = "../data/temp/" + matrixName + "_Page_" + to_string(rowIndex) + "_" + to_string(colIndex);
+    this->deleteFile(fileName);
+}
