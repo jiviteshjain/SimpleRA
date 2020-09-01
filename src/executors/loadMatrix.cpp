@@ -31,11 +31,11 @@ bool semanticParseLOADMATRIX()
         return false;
     }
 
-    // if (!isMatrix(parsedQuery.loadMatrixName))
-    // {
-    //     cout << "SEMANTIC ERROR: The file isn't a matrix" << endl;
-    //     return false;
-    // }
+    if (checkFileType(parsedQuery.loadMatrixName) != MATRIX)
+    {
+        cout << "SEMANTIC ERROR: The file isn't a matrix" << endl;
+        return false;
+    }
 
     return true;
 }

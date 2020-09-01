@@ -30,6 +30,13 @@ bool semanticParseLOAD()
         cout << "SEMANTIC ERROR: Data file doesn't exist" << endl;
         return false;
     }
+
+    if (checkFileType(parsedQuery.loadRelationName) != TABLE)
+    {
+        cout << "SEMANTIC ERROR: The file isn't a relation" << endl;
+        return false;
+    }
+
     return true;
 }
 

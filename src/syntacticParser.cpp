@@ -154,3 +154,32 @@ bool isQueryFile(string fileName){
     struct stat buffer;
     return (stat(fileName.c_str(), &buffer) == 0);
 }
+
+/**
+ * @brief Checks to see if source file is a matrix. Called when LOAD MATRIX
+ * command or EXPORT (matrix) command is invoked.
+ *
+ * @param matrixName 
+ * @return TABLE 
+ * @return MATRIX 
+ */
+
+DataType checkFileType(string matrixName)
+{
+    string fileName = "../data/" + matrixName + ".csv";
+    ifstream fin(fileName, ios::in);
+
+    string firstWord;
+    getline(fin, firstWord, ',');
+    firstWord.erase(std::remove_if(firstWord.begin(), firstWord.end(), ::isspace), firstWord.end());
+
+    try
+    {
+        stoi(firstWord);
+        return MATRIX;
+    }
+    catch (exception e)
+    {
+        return TABLE;
+    }
+}
