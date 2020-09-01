@@ -193,3 +193,11 @@ void Matrix::transpose()
         bufferManager.writeMatrixPage(this->matrixName, rowIndex, rowIndex, currentMatrix);
     }
 }
+
+void Matrix::unload() {
+    for (long long int i = 0; i < this->blockCount; i++) {
+        for (long long int j = 0; j < this->blockCount; j++) {
+            bufferManager.deleteFile(this->matrixName, i, j);
+        }
+    }
+}

@@ -43,7 +43,7 @@ class BufferManager{
     
     Page getMatrixPage(const string& matrixName, int rowIndex, int colIndex);
     void writeMatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data);
-    void deleteFile(const string& tableName, int rowIndex, int colIndex);
+    void deleteFile(const string& matrixName, int rowIndex, int colIndex);
 };
 
 #endif

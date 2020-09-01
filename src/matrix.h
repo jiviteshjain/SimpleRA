@@ -30,7 +30,7 @@ class Matrix {
     
     bool load();
     void makePermanent();
-    void unload() {}
+    void unload();
     void transpose();
 };
 
