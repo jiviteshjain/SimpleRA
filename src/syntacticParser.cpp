@@ -82,7 +82,7 @@ void ParsedQuery::clear()
     this->distinctResultRelationName = "";
     this->distinctRelationName = "";
 
-    this->exportRelationName = "";
+    this->exportRelationOrMatrixName = "";
 
     this->indexingStrategy = NOTHING;
     this->indexColumnName = "";
@@ -96,7 +96,10 @@ void ParsedQuery::clear()
     this->joinSecondColumnName = "";
 
     this->loadRelationName = "";
+    this->loadMatrixName = "";
 
+    this->transposeMatrixName = ""; 
+    
     this->printRelationName = "";
 
     this->projectionResultRelationName = "";

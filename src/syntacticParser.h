@@ -67,7 +67,7 @@ public:
     string distinctResultRelationName = "";
     string distinctRelationName = "";
 
-    string exportRelationName = "";
+    string exportRelationOrMatrixName = "";
 
     IndexingStrategy indexingStrategy = NOTHING;
     string indexColumnName = "";
