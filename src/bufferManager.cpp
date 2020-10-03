@@ -36,7 +36,7 @@ Page BufferManager::getMatrixPage(const string& matrixName, int rowIndex, int co
     if (this->inPool(pageName)) {
         return this->getFromPool(pageName);
     } else {
-        return this->insertIntoPool(matrixName, rowIndex, colIndex);
+        return this->insertMatrixPageIntoPool(matrixName, rowIndex, colIndex);
     }
 }
 
@@ -108,8 +108,39 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex) {
     return page;
 }
 
-Page BufferManager::insertIntoPool(const string& matrixName, int rowIndex, int colIndex) {
-    logger.log("BufferManager::insertMatrixIntoPool");
+/**
+ * @brief Inserts linear hashed page indicated by tableName, bucket and chainCount into pool.
+ * If the pool is full, the pool ejects the oldest inserted page from the pool and adds
+ * the current page at the end. It naturally follows a queue data structure. 
+ *
+ * @param tableName 
+ * @param bucket
+ * @param chainCount
+ *  
+ * @return Page 
+ */
+Page BufferManager::insertHashPageIntoPool(const string* tableName, int bucket, int chainCount) {
+    logger.log("BufferManager::insertHashPageIntoPool");
+    Page page(tableName, bucket, chainCount);
+    if (this->pages.size() >= BLOCK_COUNT)
+        this->pages.pop_front();
+    this->pages.push_back(page);
+    return page;
+}
+
+/**
+ * @brief Inserts linear hashed page indicated by matrixName, rowIndex and colIndex into pool.
+ * If the pool is full, the pool ejects the oldest inserted page from the pool and adds
+ * the current page at the end. It naturally follows a queue data structure. 
+ *
+ * @param matrixName
+ * @param rowIndex
+ * @param colIndex
+ *  
+ * @return Page 
+ */
+Page BufferManager::insertMatrixPageIntoPool(const string& matrixName, int rowIndex, int colIndex) {
+    logger.log("BufferManager::insertMatrixPageIntoPool");
 
     Page page(matrixName, rowIndex, colIndex);
     if (this->pages.size() >= BLOCK_COUNT)
@@ -131,6 +162,19 @@ void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int
     logger.log("BufferManager::writePage");
     Page page(tableName, pageIndex, rows, rowCount);
     page.writePage();
+}
+
+void BufferManager::writeHashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& data) {
+    logger.log("BufferManager::writeHashPage");
+    Page page(tableName, bucket, chainCount, data);
+
+    for (auto& p : this->pages) {
+        if (p.pageName == page.pageName) {
+            p = page;
+            break;
+        }
+    }
+    page.writePage(); // TODO: deferred writes
 }
 
 void BufferManager::writeMatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data) {

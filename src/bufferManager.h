@@ -30,7 +30,11 @@ class BufferManager{
     Page getFromPool(string pageName);
     Page insertIntoPool(string tableName, int pageIndex);
 
-    Page insertIntoPool(const string& matrixName, int rowIndex, int colIndex);
+    // FOR MATRIX
+    Page insertMatrixPageIntoPool(const string& matrixName, int rowIndex, int colIndex);
+
+    // FOR LINEAR HASHING
+    Page insertHashPageIntoPool(const string* matrixName, int bucket, int chainCount);
 
    public:
     
