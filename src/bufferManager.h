@@ -41,9 +41,14 @@ class BufferManager{
     void deleteFile(string fileName);
     void writePage(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount);
     
+    // FOR MATRIX
     Page getMatrixPage(const string& matrixName, int rowIndex, int colIndex);
     void writeMatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data);
     void deleteFile(const string& matrixName, int rowIndex, int colIndex);
+
+    // FOR LINEAR HASHING
+    Page getHashPage(const string& tableName, int bucket, int chainCount);
+    void writeHashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& data);
 };
 
 #endif

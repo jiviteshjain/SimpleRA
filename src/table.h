@@ -3,8 +3,7 @@
 
 #include "cursor.h"
 
-enum IndexingStrategy
-{
+enum IndexingStrategy {
     BTREE,
     HASH,
     NOTHING
@@ -19,11 +18,10 @@ enum IndexingStrategy
  * JOIN, SORT, CROSS and DISTINCT). 
  *
  */
-class Table
-{
+class Table {
     vector<unordered_set<int>> distinctValuesInColumns;
 
-public:
+   public:
     string sourceFileName = "";
     string tableName = "";
     vector<string> columns;
@@ -36,7 +34,7 @@ public:
     bool indexed = false;
     string indexedColumn = "";
     IndexingStrategy indexingStrategy = NOTHING;
-    
+
     bool extractColumnNames(string firstLine);
     bool blockify();
     void updateStatistics(vector<int> row);
@@ -54,6 +52,20 @@ public:
     int getColumnIndex(string columnName);
     void unload();
 
+    // FOR LINEAR HASHING
+
+    int M = 0; // different from blockCount, as blockCount includes overflow blocks as well
+    int N = 0; // all blocks from 0 to N-1 have been split
+    // TODO: Make these private
+
+    // We don't use rowsPerBlockCount, because the blocks now have overflow chains and cannot be numbered sequentially. Instead use blocksInBuckets.
+    vector<vector<int>> blocksInBuckets;
+    
+    int hash(int key);
+    void linearHash(const string &columnName, int bucketCount);
+    bool insertIntoHashBucket(const vector<int>& row, int bucket);
+
+
     /**
  * @brief Static function that takes a vector of valued and prints them out in a
  * comma seperated format.
@@ -61,34 +73,31 @@ public:
  * @tparam T current usaages include int and string
  * @param row 
  */
-template <typename T>
-void writeRow(vector<T> row, ostream &fout)
-{
-    logger.log("Table::printRow");
-    for (int columnCounter = 0; columnCounter < row.size(); columnCounter++)
-    {
-        if (columnCounter != 0)
-            fout << ", ";
-        fout << row[columnCounter];
+    template <typename T>
+    void writeRow(vector<T> row, ostream &fout) {
+        logger.log("Table::printRow");
+        for (int columnCounter = 0; columnCounter < row.size(); columnCounter++) {
+            if (columnCounter != 0)
+                fout << ", ";
+            fout << row[columnCounter];
+        }
+        fout << endl;
     }
-    fout << endl;
-}
 
-/**
+    /**
  * @brief Static function that takes a vector of valued and prints them out in a
  * comma seperated format.
  *
  * @tparam T current usaages include int and string
  * @param row 
  */
-template <typename T>
-void writeRow(vector<T> row)
-{
-    logger.log("Table::printRow");
-    ofstream fout(this->sourceFileName, ios::app);
-    this->writeRow(row, fout);
-    fout.close();
-}
+    template <typename T>
+    void writeRow(vector<T> row) {
+        logger.log("Table::printRow");
+        ofstream fout(this->sourceFileName, ios::app);
+        this->writeRow(row, fout);
+        fout.close();
+    }
 };
 
 #endif

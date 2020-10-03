@@ -1,7 +1,6 @@
 #include "global.h"
 
-BufferManager::BufferManager()
-{
+BufferManager::BufferManager() {
     logger.log("BufferManager::BufferManager");
 }
 
@@ -13,16 +12,23 @@ BufferManager::BufferManager()
  * @param pageIndex 
  * @return Page 
  */
-Page BufferManager::getPage(string tableName, int pageIndex)
-{
+Page BufferManager::getPage(string tableName, int pageIndex) {
     logger.log("BufferManager::getPage");
-    string pageName = "../data/temp/"+tableName + "_Page" + to_string(pageIndex);
+    string pageName = "../data/temp/" + tableName + "_Page" + to_string(pageIndex);
     if (this->inPool(pageName))
         return this->getFromPool(pageName);
     else
         return this->insertIntoPool(tableName, pageIndex);
 }
 
+/**
+ * @brief Function called to read a matrix page from the buffer manager. If the page is
+ * not present in the pool, the page is read and then inserted into the pool.
+ *
+ * @param tableName 
+ * @param pageIndex 
+ * @return Page 
+ */
 Page BufferManager::getMatrixPage(const string& matrixName, int rowIndex, int colIndex) {
     logger.log("BufferManager::getMatrixPage");
 
@@ -35,17 +41,34 @@ Page BufferManager::getMatrixPage(const string& matrixName, int rowIndex, int co
 }
 
 /**
+ * @brief Function called to read a linear hash page from the buffer manager. If the page is
+ * not present in the pool, the page is read and then inserted into the pool.
+ *
+ * @param tableName 
+ * @param pageIndex 
+ * @return Page 
+ */
+Page BufferManager::getHashPage(const string& tableName, int bucket, int chainCount) {
+    logger.log("BufferManager::getHashPage");
+
+    string pageName = "../data/temp/" + tableName + "_Page_" + to_string(bucket) + "_" + to_string(chainCount);
+    if (this->inPool(pageName)) {
+        return this->getFromPool(pageName);
+    } else {
+        return this->insertIntoPool(tableName, bucket, chainCount);
+    }
+}
+
+/**
  * @brief Checks to see if a page exists in the pool
  *
  * @param pageName 
  * @return true 
  * @return false 
  */
-bool BufferManager::inPool(string pageName)
-{
+bool BufferManager::inPool(string pageName) {
     logger.log("BufferManager::inPool");
-    for (auto page : this->pages)
-    {
+    for (auto page : this->pages) {
         if (pageName == page.pageName)
             return true;
     }
@@ -60,8 +83,7 @@ bool BufferManager::inPool(string pageName)
  * @param pageName 
  * @return Page 
  */
-Page BufferManager::getFromPool(string pageName)
-{
+Page BufferManager::getFromPool(string pageName) {
     logger.log("BufferManager::getFromPool");
     for (auto page : this->pages)
         if (pageName == page.pageName)
@@ -77,8 +99,7 @@ Page BufferManager::getFromPool(string pageName)
  * @param pageIndex 
  * @return Page 
  */
-Page BufferManager::insertIntoPool(string tableName, int pageIndex)
-{
+Page BufferManager::insertIntoPool(string tableName, int pageIndex) {
     logger.log("BufferManager::insertIntoPool");
     Page page(tableName, pageIndex);
     if (this->pages.size() >= BLOCK_COUNT)
@@ -88,8 +109,8 @@ Page BufferManager::insertIntoPool(string tableName, int pageIndex)
 }
 
 Page BufferManager::insertIntoPool(const string& matrixName, int rowIndex, int colIndex) {
-    logger.log("BufferManager::insertIntoPool");
-    
+    logger.log("BufferManager::insertMatrixIntoPool");
+
     Page page(matrixName, rowIndex, colIndex);
     if (this->pages.size() >= BLOCK_COUNT)
         this->pages.pop_front();
@@ -106,8 +127,7 @@ Page BufferManager::insertIntoPool(const string& matrixName, int rowIndex, int c
  * @param rows 
  * @param rowCount 
  */
-void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount)
-{
+void BufferManager::writePage(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount) {
     logger.log("BufferManager::writePage");
     Page page(tableName, pageIndex, rows, rowCount);
     page.writePage();
@@ -117,7 +137,7 @@ void BufferManager::writeMatrixPage(const string& matrixName, int rowIndex, int 
     logger.log("BufferManager::writeMatrixPage");
     Page page(matrixName, rowIndex, colIndex, data);
 
-    for (auto &p : this->pages) {
+    for (auto& p : this->pages) {
         if (p.pageName == page.pageName) {
             p = page;
             break;
@@ -132,12 +152,11 @@ void BufferManager::writeMatrixPage(const string& matrixName, int rowIndex, int 
  *
  * @param fileName 
  */
-void BufferManager::deleteFile(string fileName)
-{
-    
+void BufferManager::deleteFile(string fileName) {
     if (remove(fileName.c_str()))
         logger.log("BufferManager::deleteFile: Err");
-        else logger.log("BufferManager::deleteFile: Success");
+    else
+        logger.log("BufferManager::deleteFile: Success");
 }
 
 /**
@@ -147,16 +166,15 @@ void BufferManager::deleteFile(string fileName)
  * @param tableName 
  * @param pageIndex 
  */
-void BufferManager::deleteFile(string tableName, int pageIndex)
-{
+void BufferManager::deleteFile(string tableName, int pageIndex) {
     logger.log("BufferManager::deleteFile");
-    string fileName = "../data/temp/"+tableName + "_Page" + to_string(pageIndex);
+    string fileName = "../data/temp/" + tableName + "_Page" + to_string(pageIndex);
     this->deleteFile(fileName);
 }
 
 void BufferManager::deleteFile(const string& matrixName, int rowIndex, int colIndex) {
     logger.log("BufferManager::deleteFile");
-    
+
     string fileName = "../data/temp/" + matrixName + "_Page_" + to_string(rowIndex) + "_" + to_string(colIndex);
     this->deleteFile(fileName);
 }
