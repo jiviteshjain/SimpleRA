@@ -13,6 +13,9 @@
  *</p>
  */
 
+#define TABLE_PAGE_NAME(table, index) ("../data/temp/" + (table) + "_T-Page_" + to_string(index))
+#define MATRIX_PAGE_NAME(matrix, row, col) ("../data/temp/" + (matrix) + "_M-Page_" + to_string(row) + "_" + to_string(col))
+#define HASH_PAGE_NAME(table, bucket, chain) ("../data/temp/" + (table) + "_H-Page_" + to_string(bucket) + "_" + to_string(chain))
 
 class Page {
 

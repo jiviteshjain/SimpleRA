@@ -29,7 +29,7 @@ TablePage::TablePage(string tableName, int pageIndex) {
     logger.log("TablePage::TablePage");
     this->tableName = tableName;
     this->pageIndex = pageIndex;
-    this->pageName = "../data/temp/" + this->tableName + "_Page" + to_string(pageIndex);
+    this->pageName = TABLE_PAGE_NAME(tableName, pageIndex);
     Table table = *tableCatalogue.getTable(tableName);
     this->columnCount = table.columnCount;
     uint maxRowCount = table.maxRowsPerBlock;
@@ -70,7 +70,7 @@ TablePage::TablePage(string tableName, int pageIndex, vector<vector<int>> rows, 
     this->data = rows;
     this->rowCount = rowCount;
     this->columnCount = rows[0].size();
-    this->pageName = "../data/temp/" + this->tableName + "_Page" + to_string(pageIndex);
+    this->pageName = TABLE_PAGE_NAME(this->tableName, pageIndex);
 }
 
 /**
@@ -97,7 +97,7 @@ MatrixPage::MatrixPage(const string& matrixName, int rowIndex, int colIndex) {
     this->matrixName = matrixName;
     this->rowIndex = rowIndex;
     this->colIndex = colIndex;
-    this->pageName = "../data/temp/" + this->matrixName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
+    this->pageName = MATRIX_PAGE_NAME(this->matrixName, this->rowIndex, this->colIndex);
 
     this->matrix.resize(MATRIX_PAGE_DIM);
     fill(this->matrix.begin(), this->matrix.end(), vector<int>(MATRIX_PAGE_DIM, -1));
@@ -118,7 +118,7 @@ MatrixPage::MatrixPage(const string& matrixName, int rowIndex, int colIndex, con
     this->matrixName = matrixName;
     this->rowIndex = rowIndex;
     this->colIndex = colIndex;
-    this->pageName = "../data/temp/" + this->matrixName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
+    this->pageName = MATRIX_PAGE_NAME(this->matrixName, this->rowIndex, this->colIndex);
 
     this->matrix = data;
 }
@@ -151,7 +151,7 @@ HashPage::HashPage(const string& tableName, int bucket, int chainCount) {
     this->tableName = tableName;
     this->bucket = bucket;
     this->chainCount = chainCount;
-    this->pageName = "../data/temp/" + this->tableName + "_Page_" + to_string(this->bucket) + "_" + to_string(this->chainCount);
+    this->pageName = HASH_PAGE_NAME(this->tableName, this->bucket, this->chainCount);
     Table table = *tableCatalogue.getTable(tableName);
     this->columnCount = table.columnCount;
     uint maxRowCount = table.maxRowsPerBlock;
@@ -178,7 +178,7 @@ HashPage::HashPage(const string& tableName, int bucket, int chainCount, const ve
     this->data = rows;
     this->rowCount = rows.size();
     this->columnCount = rows[0].size();
-    this->pageName = "../data/temp/" + this->tableName + "_Page_" + to_string(this->bucket) + "_" + to_string(this->chainCount);
+    this->pageName = HASH_PAGE_NAME(this->tableName, this->bucket, this->chainCount);
 }
 
 string getPageName(const Pages& page) {

@@ -332,7 +332,6 @@ void Table::linearHash(const string& columnName, int bucketCount) {
     if (this->rowCount == 0) {
         return;
     }
-    cout << "DEBUG" << this->rowCount;
 
     // set metadata
     this->indexed = true;
@@ -354,7 +353,17 @@ void Table::linearHash(const string& columnName, int bucketCount) {
         // but we don't need to split right now.
     }
 
-    // TODO: Delete existing pages
+    // Delete existing pages
+    for (int i = 0; i < this->blockCount; i++) {
+        bufferManager.deleteTableFile(this->tableName, i);
+    }
+
+    // Update block count
+    this->blockCount = 0;
+    for (auto &b : this->blocksInBuckets) {
+        this->blockCount += b.size();
+    }
+    this->rowsPerBlockCount.clear(); // this doesn't hold any meaning anymore
 }
 
 /**

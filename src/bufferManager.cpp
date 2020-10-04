@@ -14,7 +14,7 @@ BufferManager::BufferManager() {
  */
 TablePage BufferManager::getTablePage(string tableName, int pageIndex) {
     logger.log("BufferManager::getTablePage");
-    string pageName = "../data/temp/" + tableName + "_Page" + to_string(pageIndex);
+    string pageName = TABLE_PAGE_NAME(tableName, pageIndex);
     if (this->inPool(pageName))
         return get<TablePage>(this->getFromPool(pageName));
     else
@@ -32,7 +32,7 @@ TablePage BufferManager::getTablePage(string tableName, int pageIndex) {
 MatrixPage BufferManager::getMatrixPage(const string& matrixName, int rowIndex, int colIndex) {
     logger.log("BufferManager::getMatrixPage");
 
-    string pageName = "../data/temp/" + matrixName + "_Page_" + to_string(rowIndex) + "_" + to_string(colIndex);
+    string pageName = MATRIX_PAGE_NAME(matrixName, rowIndex, colIndex);
     if (this->inPool(pageName)) {
         return get<MatrixPage>(this->getFromPool(pageName));
     } else {
@@ -51,7 +51,7 @@ MatrixPage BufferManager::getMatrixPage(const string& matrixName, int rowIndex, 
 HashPage BufferManager::getHashPage(const string& tableName, int bucket, int chainCount) {
     logger.log("BufferManager::getHashPage");
 
-    string pageName = "../data/temp/" + tableName + "_Page_" + to_string(bucket) + "_" + to_string(chainCount);
+    string pageName = HASH_PAGE_NAME(tableName, bucket, chainCount);
     if (this->inPool(pageName)) {
         return get<HashPage>(this->getFromPool(pageName));
     } else {
@@ -165,7 +165,6 @@ void BufferManager::writeTablePage(string tableName, int pageIndex, vector<vecto
 }
 
 void BufferManager::writeHashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& data) {
-    cout << "DEBUGPAGESIZE" << data.size() << endl;
     logger.log("BufferManager::writeHashPage");
     HashPage page(tableName, bucket, chainCount, data);
 
@@ -213,13 +212,13 @@ void BufferManager::deleteFile(string fileName) {
  */
 void BufferManager::deleteTableFile(string tableName, int pageIndex) {
     logger.log("BufferManager::deleteTableFile");
-    string fileName = "../data/temp/" + tableName + "_Page" + to_string(pageIndex);
+    string fileName = TABLE_PAGE_NAME(tableName, pageIndex);
     this->deleteFile(fileName);
 }
 
 void BufferManager::deleteMatrixFile(const string& matrixName, int rowIndex, int colIndex) {
     logger.log("BufferManager::deleteMatrixFile");
 
-    string fileName = "../data/temp/" + matrixName + "_Page_" + to_string(rowIndex) + "_" + to_string(colIndex);
+    string fileName = MATRIX_PAGE_NAME(matrixName, rowIndex, colIndex);
     this->deleteFile(fileName);
 }
