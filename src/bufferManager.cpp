@@ -222,3 +222,10 @@ void BufferManager::deleteMatrixFile(const string& matrixName, int rowIndex, int
     string fileName = MATRIX_PAGE_NAME(matrixName, rowIndex, colIndex);
     this->deleteFile(fileName);
 }
+
+void BufferManager::deleteHashFile(const string& tableName, int bucket, int chainCount) {
+    logger.log("BufferManager::deleteHashFile");
+
+    string fileName = HASH_PAGE_NAME(tableName, bucket, chainCount);
+    this->deleteFile(fileName);
+}

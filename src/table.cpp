@@ -271,10 +271,18 @@ bool Table::isPermanent() {
  */
 void Table::unload() {
     logger.log("Table::~unload");
-    for (int pageCounter = 0; pageCounter < this->blockCount; pageCounter++)
-        bufferManager.deleteTableFile(this->tableName, pageCounter);
-    if (!isPermanent())
-        bufferManager.deleteFile(this->sourceFileName);
+    if (this->indexingStrategy == NOTHING) {
+        for (int pageCounter = 0; pageCounter < this->blockCount; pageCounter++)
+            bufferManager.deleteTableFile(this->tableName, pageCounter);
+        if (!isPermanent())
+            bufferManager.deleteFile(this->sourceFileName);
+    } else if (this->indexingStrategy == HASH) {
+        for (int i = 0; i < this->blocksInBuckets.size(); i++) { // not necessarily this->M
+            for (int j = 0; j < this->blocksInBuckets[i].size(); j++) {
+                bufferManager.deleteHashFile(this->tableName, i, j);
+            }
+        }
+    }
 }
 
 /**

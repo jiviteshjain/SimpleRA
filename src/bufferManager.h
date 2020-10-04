@@ -57,7 +57,7 @@ class BufferManager{
     // FOR LINEAR HASHING
     HashPage getHashPage(const string& tableName, int bucket, int chainCount);
     void writeHashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& data);
-    void deleteHashFile(const string* tableName, int bucket, int chainCount);
+    void deleteHashFile(const string& tableName, int bucket, int chainCount);
 };
 
 #endif
