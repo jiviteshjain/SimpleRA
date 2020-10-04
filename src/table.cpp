@@ -388,6 +388,7 @@ void Table::linearHash(const string& columnName, int bucketCount) {
     if (this->rowCount == 0) {
         return;
     }
+    cout << "DEBUG" << this->rowCount;
 
     // set metadata
     this->indexed = true;
