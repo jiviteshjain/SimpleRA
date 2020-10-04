@@ -175,10 +175,10 @@ void Matrix::transpose()
     {
         for (int colIndex = rowIndex + 1; colIndex < this->blockCount; colIndex++)
         {
-            Page currentPage = bufferManager.getMatrixPage(this->matrixName, rowIndex, colIndex);
+            MatrixPage currentPage = bufferManager.getMatrixPage(this->matrixName, rowIndex, colIndex);
             vector<vector<int>> currentMatrix = currentPage.getMatrix();
 
-            Page swapPage = bufferManager.getMatrixPage(this->matrixName, colIndex, rowIndex);
+            MatrixPage swapPage = bufferManager.getMatrixPage(this->matrixName, colIndex, rowIndex);
             vector<vector<int>> swapMatrix = swapPage.getMatrix();
 
             // transposing inside the matrices
@@ -197,7 +197,7 @@ void Matrix::transpose()
     // for blocks on diagonal
     for (int rowIndex = 0; rowIndex < this->blockCount; rowIndex++)
     {
-        Page currentPage = bufferManager.getMatrixPage(this->matrixName, rowIndex, rowIndex);
+        MatrixPage currentPage = bufferManager.getMatrixPage(this->matrixName, rowIndex, rowIndex);
         vector<vector<int>> currentMatrix = currentPage.getMatrix();
         
         // transposing inside the matrix
@@ -212,7 +212,7 @@ void Matrix::transpose()
 void Matrix::unload() {
     for (long long int i = 0; i < this->blockCount; i++) {
         for (long long int j = 0; j < this->blockCount; j++) {
-            bufferManager.deleteFile(this->matrixName, i, j);
+            bufferManager.deleteMatrixFile(this->matrixName, i, j);
         }
     }
 }

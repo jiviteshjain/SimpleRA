@@ -75,16 +75,17 @@ void executeINDEX()
     {
         table->indexed = false;
         table->indexedColumn = "";
-        clearIndex();
+        // clearIndex();
     }
     else
     {
         table->indexed=true;
         table->indexedColumn = parsedQuery.indexColumnName;
         if (table->indexingStrategy == HASH)
-            linearHash(atoi(tokenizedQuery[8].c_str()));
+            table->linearHash(parsedQuery.indexColumnName, stoi(tokenizedQuery[8]));
         else if (table->indexingStrategy == BTREE)
-            bPlusTree(atoi(tokenizedQuery[8].c_str()));
+            ;
+            // bPlusTree(atoi(tokenizedQuery[8].c_str()));
     }
     cout<<"Column = "<<table->indexedColumn<<endl<<"Indexed = "<<table->indexed<<endl;
     logger.log("executeINDEX");

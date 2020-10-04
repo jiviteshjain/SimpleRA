@@ -6,6 +6,12 @@
 
 using namespace std;
 
+enum DataType
+{
+    TABLE,
+    MATRIX
+};
+
 enum QueryType
 {
     CLEAR,

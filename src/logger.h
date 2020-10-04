@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include<bits/stdc++.h>
+#include<variant>
 #include<sys/stat.h> 
 #include<fstream>
 

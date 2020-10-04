@@ -40,3 +40,6 @@ data/temp/**
 
 # Log
 src/log
+
+# Editor
+**/.vscode/**

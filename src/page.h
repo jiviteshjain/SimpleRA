@@ -1,7 +1,7 @@
 #ifndef __PAGE_H
 #define __PAGE_H
 
-#include"logger.h"
+#include "logger.h"
 /**
  * @brief The Page object is the main memory representation of a physical page
  * (equivalent to a block). The page class and the page.h header file are at the
@@ -13,39 +13,61 @@
  *</p>
  */
 
-enum DataType {
-    TABLE,
-    MATRIX
-};
 
-class Page{
+class Page {
 
+   protected:
     string tableName;
-    string pageIndex;
+    // TODO: Remove rowCount and columnCount
     int columnCount;
     int rowCount;
-    vector<vector<int>> rows;
+   
+   public:
+    // TODO: Make these protected
+    string pageName = "";
+    vector<vector<int>> data;
+    vector<int> getRow(int rowIndex);
+    Page();
+    void writePage();
+    
+};
+
+class TablePage : public Page {
+
+    string pageIndex;
+
+   public:
+    TablePage();
+    TablePage(string tableName, int pageIndex);
+    TablePage(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount);
+};
+
+class HashPage : public Page {
+    int bucket;
+    int chainCount;
+   public:
+    HashPage();
+    HashPage(const string& tableName, int bucket, int chainCount);
+    HashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& data);
+};
+
+class MatrixPage : public Page {
 
     string matrixName;
     int rowIndex;
     int colIndex;
     vector<vector<int>> matrix;
 
-    public:
-
-    DataType type = TABLE;
-
-    string pageName = "";
-    Page();
-    Page(string tableName, int pageIndex);
-    Page(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount);
-    vector<int> getRow(int rowIndex);
-    void writePage();
-
-    Page(const string& matrixName, int rowIndex, int colIndex);
-    Page(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data);
+   public:
+    MatrixPage();
+    MatrixPage(const string& matrixName, int rowIndex, int colIndex);
+    MatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data);
+    bool writePage();
     vector<vector<int>> getMatrix();
-    bool writeMatrixPage();
 };
+
+typedef variant<Page, TablePage, HashPage, MatrixPage> Pages;
+
+string getPageName(const Pages& page);
 
 #endif

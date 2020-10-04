@@ -24,35 +24,40 @@
  *
  */
 class BufferManager{
-
-    deque<Page> pages; 
+    deque<Pages> pages; 
     bool inPool(string pageName);
-    Page getFromPool(string pageName);
-    Page insertIntoPool(string tableName, int pageIndex);
+    Pages getFromPool(string pageName);
+
+    // FOR TABLE
+    TablePage insertTablePageIntoPool(string tableName, int pageIndex);
 
     // FOR MATRIX
-    Page insertMatrixPageIntoPool(const string& matrixName, int rowIndex, int colIndex);
+    MatrixPage insertMatrixPageIntoPool(const string& matrixName, int rowIndex, int colIndex);
 
     // FOR LINEAR HASHING
-    Page insertHashPageIntoPool(const string* matrixName, int bucket, int chainCount);
+    HashPage insertHashPageIntoPool(const string& tableName, int bucket, int chainCount);
 
    public:
     
     BufferManager();
-    Page getPage(string tableName, int pageIndex);
-    void writePage(string tableName, vector<vector<int>> rows);
-    void deleteFile(string tableName, int pageIndex);
     void deleteFile(string fileName);
-    void writePage(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount);
+    // void writeTablePage(string tableName, vector<vector<int>> rows);
+    ;
+
+    // FOR TABLE
+    TablePage getTablePage(string tableName, int pageIndex);
+    void deleteTableFile(string tableName, int pageIndex);
+    void writeTablePage(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount);
     
     // FOR MATRIX
-    Page getMatrixPage(const string& matrixName, int rowIndex, int colIndex);
+    MatrixPage getMatrixPage(const string& matrixName, int rowIndex, int colIndex);
     void writeMatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data);
-    void deleteFile(const string& matrixName, int rowIndex, int colIndex);
+    void deleteMatrixFile(const string& matrixName, int rowIndex, int colIndex);
 
     // FOR LINEAR HASHING
-    Page getHashPage(const string& tableName, int bucket, int chainCount);
+    HashPage getHashPage(const string& tableName, int bucket, int chainCount);
     void writeHashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& data);
+    void deleteHashFile(const string* tableName, int bucket, int chainCount);
 };
 
 #endif

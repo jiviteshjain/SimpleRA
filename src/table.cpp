@@ -117,14 +117,14 @@ bool Table::blockify() {
         pageCounter++;
         this->updateStatistics(row);
         if (pageCounter == this->maxRowsPerBlock) {
-            bufferManager.writePage(this->tableName, this->blockCount, rowsInPage, pageCounter);
+            bufferManager.writeTablePage(this->tableName, this->blockCount, rowsInPage, pageCounter);
             this->blockCount++;
             this->rowsPerBlockCount.emplace_back(pageCounter);
             pageCounter = 0;
         }
     }
     if (pageCounter) {
-        bufferManager.writePage(this->tableName, this->blockCount, rowsInPage, pageCounter);
+        bufferManager.writeTablePage(this->tableName, this->blockCount, rowsInPage, pageCounter);
         this->blockCount++;
         this->rowsPerBlockCount.emplace_back(pageCounter);
         pageCounter = 0;
@@ -272,7 +272,7 @@ bool Table::isPermanent() {
 void Table::unload() {
     logger.log("Table::~unload");
     for (int pageCounter = 0; pageCounter < this->blockCount; pageCounter++)
-        bufferManager.deleteFile(this->tableName, pageCounter);
+        bufferManager.deleteTableFile(this->tableName, pageCounter);
     if (!isPermanent())
         bufferManager.deleteFile(this->sourceFileName);
 }
@@ -332,6 +332,7 @@ void Table::linearHash(const string& columnName, int bucketCount) {
     if (this->rowCount == 0) {
         return;
     }
+    cout << "DEBUG" << this->rowCount;
 
     // set metadata
     this->indexed = true;
@@ -375,7 +376,7 @@ bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
     if (!this->blocksInBuckets[bucket].empty() && this->blocksInBuckets[bucket].back() < this->maxRowsPerBlock) {
         // Fit in the last block
         
-        rows = bufferManager.getHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1).rows;
+        rows = bufferManager.getHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1).data;
         // TODO: Exception handling, page not found
 
         this->blocksInBuckets[bucket].back() = this->blocksInBuckets[bucket].back() + 1;
@@ -389,4 +390,5 @@ bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
 
     rows.push_back(row);
     bufferManager.writeHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1, rows);
+    return newPage;
 }

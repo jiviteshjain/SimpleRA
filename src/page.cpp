@@ -3,14 +3,14 @@
  * @brief Construct a new Page object. Never used as part of the code
  *
  */
-Page::Page()
-{
+Page::Page() {
+    logger.log("Page::Page");
+
     this->pageName = "";
     this->tableName = "";
-    this->pageIndex = -1;
     this->rowCount = 0;
     this->columnCount = 0;
-    this->rows.clear();
+    this->data.clear();
 }
 
 /**
@@ -25,9 +25,8 @@ Page::Page()
  * @param tableName 
  * @param pageIndex 
  */
-Page::Page(string tableName, int pageIndex)
-{
-    logger.log("Page::Page");
+TablePage::TablePage(string tableName, int pageIndex) {
+    logger.log("TablePage::TablePage");
     this->tableName = tableName;
     this->pageIndex = pageIndex;
     this->pageName = "../data/temp/" + this->tableName + "_Page" + to_string(pageIndex);
@@ -35,17 +34,15 @@ Page::Page(string tableName, int pageIndex)
     this->columnCount = table.columnCount;
     uint maxRowCount = table.maxRowsPerBlock;
     vector<int> row(columnCount, 0);
-    this->rows.assign(maxRowCount, row);
+    this->data.assign(maxRowCount, row);
 
     ifstream fin(pageName, ios::in);
     this->rowCount = table.rowsPerBlockCount[pageIndex];
     int number;
-    for (uint rowCounter = 0; rowCounter < this->rowCount; rowCounter++)
-    {
-        for (int columnCounter = 0; columnCounter < columnCount; columnCounter++)
-        {
+    for (uint rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
+        for (int columnCounter = 0; columnCounter < columnCount; columnCounter++) {
             fin >> number;
-            this->rows[rowCounter][columnCounter] = number;
+            this->data[rowCounter][columnCounter] = number;
         }
     }
     fin.close();
@@ -57,96 +54,83 @@ Page::Page(string tableName, int pageIndex)
  * @param rowIndex 
  * @return vector<int> 
  */
-vector<int> Page::getRow(int rowIndex)
-{
+vector<int> Page::getRow(int rowIndex) {
     logger.log("Page::getRow");
     vector<int> result;
     result.clear();
     if (rowIndex >= this->rowCount)
         return result;
-    return this->rows[rowIndex];
+    return this->data[rowIndex];
 }
 
-Page::Page(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount)
-{
+TablePage::TablePage(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount) {
     logger.log("Page::Page");
     this->tableName = tableName;
     this->pageIndex = pageIndex;
-    this->rows = rows;
+    this->data = rows;
     this->rowCount = rowCount;
     this->columnCount = rows[0].size();
-    this->pageName = "../data/temp/"+this->tableName + "_Page" + to_string(pageIndex);
+    this->pageName = "../data/temp/" + this->tableName + "_Page" + to_string(pageIndex);
 }
 
 /**
  * @brief writes current page contents to file.
  * 
  */
-void Page::writePage()
-{
+void Page::writePage() {
     logger.log("Page::writePage");
     ofstream fout(this->pageName, ios::trunc);
-    for (int rowCounter = 0; rowCounter < this->rowCount; rowCounter++)
-    {
-        for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++)
-        {
+    for (int rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
+        for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++) {
             if (columnCounter != 0)
                 fout << " ";
-            fout << this->rows[rowCounter][columnCounter];
+            fout << this->data[rowCounter][columnCounter];
         }
         fout << endl;
     }
     fout.close();
 }
 
+MatrixPage::MatrixPage(const string& matrixName, int rowIndex, int colIndex) {
+    logger.log("MatrixPage::MatrixPage");
 
-Page::Page(const string& matrixName, int rowIndex, int colIndex) {
-    logger.log("Page::Page");
-    
-    this->type = MATRIX;
     this->matrixName = matrixName;
     this->rowIndex = rowIndex;
     this->colIndex = colIndex;
     this->pageName = "../data/temp/" + this->matrixName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
 
     this->matrix.resize(MATRIX_PAGE_DIM);
-    fill(this->matrix.begin(), this->matrix.end(), vector<int> (MATRIX_PAGE_DIM, -1));
+    fill(this->matrix.begin(), this->matrix.end(), vector<int>(MATRIX_PAGE_DIM, -1));
 
     ifstream fin(this->pageName, ios::in);
     for (int i = 0; i < MATRIX_PAGE_DIM; i++) {
         for (int j = 0; j < MATRIX_PAGE_DIM; j++) {
             int temp;
             fin >> temp;
-            this->matrix[i][j] = temp; // -1's are also filled
+            this->matrix[i][j] = temp;  // -1's are also filled
         }
     }
 }
 
-Page::Page(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data) {
-    logger.log("Page::Page");
-    
-    this->type = MATRIX;
+MatrixPage::MatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data) {
+    logger.log("MatrixPage::MatrixPage");
+
     this->matrixName = matrixName;
     this->rowIndex = rowIndex;
     this->colIndex = colIndex;
     this->pageName = "../data/temp/" + this->matrixName + "_Page_" + to_string(this->rowIndex) + "_" + to_string(this->colIndex);
-    
+
     this->matrix = data;
 }
 
-vector<vector<int>> Page::getMatrix() {
-    logger.log("Page::getMatrix");
+vector<vector<int>> MatrixPage::getMatrix() {
+    logger.log("MatrixPage::getMatrix");
 
-    if (this->type != MATRIX) {
-        return vector<vector<int>> (0);
-    }
     return this->matrix;
 }
 
-bool Page::writeMatrixPage() {
-    if (this->type != MATRIX) {
-        return false;
-    }
+bool MatrixPage::writePage() {
+    logger.log("MatrixPage::writePage");
 
     ofstream fout(this->pageName, ios::trunc);
     for (int i = 0; i < MATRIX_PAGE_DIM; i++) {
@@ -160,4 +144,43 @@ bool Page::writeMatrixPage() {
     }
     fout.close();
     return true;
+}
+
+HashPage::HashPage(const string& tableName, int bucket, int chainCount) {
+    logger.log("HashPage::HashPage");
+    this->tableName = tableName;
+    this->bucket = bucket;
+    this->chainCount = chainCount;
+    this->pageName = "../data/temp/" + this->tableName + "_Page_" + to_string(this->bucket) + "_" + to_string(this->chainCount);
+    Table table = *tableCatalogue.getTable(tableName);
+    this->columnCount = table.columnCount;
+    uint maxRowCount = table.maxRowsPerBlock;
+    vector<int> row(columnCount, 0);
+    this->rowCount = table.blocksInBuckets[bucket][chainCount];
+    this->data.assign(this->rowCount, row);
+
+    ifstream fin(pageName, ios::in);
+    int number;
+    for (uint rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
+        for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++) {
+            fin >> number;
+            this->data[rowCounter][columnCounter] = number;
+        }
+    }
+    fin.close();
+}
+
+HashPage::HashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& rows) {
+    logger.log("HashPage::HashPage");
+    this->tableName = tableName;
+    this->bucket = bucket;
+    this->chainCount = chainCount;
+    this->data = rows;
+    this->rowCount = rows.size();
+    this->columnCount = rows[0].size();
+    this->pageName = "../data/temp/" + this->tableName + "_Page_" + to_string(this->bucket) + "_" + to_string(this->chainCount);
+}
+
+string getPageName(const Pages& page) {
+    return visit([](auto&& arg){return arg.pageName;}, page);
 }

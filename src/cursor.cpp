@@ -2,7 +2,7 @@
 
 Cursor::Cursor(string tableName, int pageIndex) {
     logger.log("Cursor::Cursor");
-    this->page = bufferManager.getPage(tableName, pageIndex);
+    this->page = bufferManager.getTablePage(tableName, pageIndex);
     this->pagePointer = 0;
     this->tableName = tableName;
     this->pageIndex = pageIndex;
@@ -36,7 +36,7 @@ vector<int> Cursor::getNext() {
  */
 void Cursor::nextPage(int pageIndex) {
     logger.log("Cursor::nextPage");
-    this->page = bufferManager.getPage(this->tableName, pageIndex);
+    this->page = bufferManager.getTablePage(this->tableName, pageIndex);
     this->pageIndex = pageIndex;
     this->pagePointer = 0;
 }
