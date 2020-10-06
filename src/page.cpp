@@ -181,6 +181,12 @@ HashPage::HashPage(const string& tableName, int bucket, int chainCount, const ve
     this->pageName = HASH_PAGE_NAME(this->tableName, this->bucket, this->chainCount);
 }
 
+// VARIANT VISITORS
+
 string getPageName(const Pages& page) {
     return visit([](auto&& arg){return arg.pageName;}, page);
+}
+
+void writePage(Pages& page) { // cannot gaurantee const on this, because calls a member function
+    visit([](auto&& arg){arg.writePage();}, page);
 }

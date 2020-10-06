@@ -102,9 +102,13 @@ Pages BufferManager::getFromPool(string pageName) {
 TablePage BufferManager::insertTablePageIntoPool(string tableName, int pageIndex) {
     logger.log("BufferManager::insertIntoPool");
     TablePage page(tableName, pageIndex);
-    if (this->pages.size() >= BLOCK_COUNT)
-        pages.pop_front();
-    pages.emplace_back(page);
+
+#ifdef DEFER_WRITE
+    this->push(page);
+#else
+    this->push(page, false);
+#endif
+
     return page;
 }
 
@@ -122,9 +126,13 @@ TablePage BufferManager::insertTablePageIntoPool(string tableName, int pageIndex
 HashPage BufferManager::insertHashPageIntoPool(const string& tableName, int bucket, int chainCount) {
     logger.log("BufferManager::insertHashPageIntoPool");
     HashPage page(tableName, bucket, chainCount);
-    if (this->pages.size() >= BLOCK_COUNT)
-        this->pages.pop_front();
-    this->pages.emplace_back(page);
+
+#ifdef DEFER_WRITE
+    this->push(page);
+#else
+    this->push(page, false);
+#endif
+
     return page;
 }
 
@@ -143,9 +151,13 @@ MatrixPage BufferManager::insertMatrixPageIntoPool(const string& matrixName, int
     logger.log("BufferManager::insertMatrixPageIntoPool");
 
     MatrixPage page(matrixName, rowIndex, colIndex);
-    if (this->pages.size() >= BLOCK_COUNT)
-        this->pages.pop_front();
-    this->pages.emplace_back(page);
+
+#ifdef DEFER_WRITE
+    this->push(page);
+#else
+    this->push(page, false);
+#endif
+
     return page;
 }
 
@@ -161,7 +173,12 @@ MatrixPage BufferManager::insertMatrixPageIntoPool(const string& matrixName, int
 void BufferManager::writeTablePage(string tableName, int pageIndex, vector<vector<int>> rows, int rowCount) {
     logger.log("BufferManager::writeTablePage");
     TablePage page(tableName, pageIndex, rows, rowCount);
-    page.writePage();
+
+#ifdef DEFER_WRITE
+    this->push(page);
+#else
+    this->push(page, false);
+#endif
 }
 
 void BufferManager::writeHashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& data) {
@@ -169,27 +186,22 @@ void BufferManager::writeHashPage(const string& tableName, int bucket, int chain
     logger.log("BufferManager::writeHashPage");
     HashPage page(tableName, bucket, chainCount, data);
 
-    for (auto& p : this->pages) {
-        if (getPageName(p) == page.pageName) {
-            p = page;
-            break;
-        }
-    }
-    page.writePage();  // TODO: deferred writes
+#ifdef DEFER_WRITE
+    this->push(page);
+#else
+    this->push(page, false);
+#endif
 }
 
 void BufferManager::writeMatrixPage(const string& matrixName, int rowIndex, int colIndex, const vector<vector<int>>& data) {
     logger.log("BufferManager::writeMatrixPage");
     MatrixPage page(matrixName, rowIndex, colIndex, data);
 
-    for (auto& p : this->pages) {
-        if (getPageName(p) == page.pageName) {
-            p = page;
-            break;
-        }
-    }
-
-    page.writePage();
+#ifdef DEFER_WRITE
+    this->push(page);
+#else
+    this->push(page, false);
+#endif
 }
 
 /**
@@ -229,4 +241,30 @@ void BufferManager::deleteHashFile(const string& tableName, int bucket, int chai
 
     string fileName = HASH_PAGE_NAME(tableName, bucket, chainCount);
     this->deleteFile(fileName);
+}
+// TODO: DELETE FROM BUFFER ALSO
+
+void BufferManager::push(Pages page, bool deferWrite) {
+    if (!deferWrite) {
+        writePage(page);  // write current page instantly if not deferred
+    }
+
+    // already in buffer
+    for (auto &p : this->pages) {
+        if (getPageName(p) == getPageName(page)) {
+            p = page;
+            return;
+        }
+    }
+
+    // kick first page out of buffer
+    if (this->pages.size() >= BLOCK_COUNT && !this->pages.empty()) { // so it runs even if block count is set to 0
+        if (deferWrite) {
+            writePage(this->pages.front()); // wasn't written earlier, because deferred
+        }
+        this->pages.pop_front();
+    }
+
+    // insert this page
+    this->pages.emplace_back(page);
 }

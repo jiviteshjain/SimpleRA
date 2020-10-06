@@ -72,5 +72,6 @@ class MatrixPage : public Page {
 typedef variant<Page, TablePage, HashPage, MatrixPage> Pages;
 
 string getPageName(const Pages& page);
+void writePage(Pages& page);
 
 #endif

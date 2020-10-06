@@ -16,6 +16,16 @@ ifdef DEBUG
 CXXFLAGS += $(DEBUGFLAGS)
 endif
 # ****************************************************
+# Macros
+ifndef DEFER_WRITE
+CXXFLAGS += -D DEFER_WRITE
+else
+ifneq ($(DEFER_WRITE), FALSE)
+CXXFLAGS += -D DEFER_WRITE
+endif
+endif
+
+# ****************************************************
 # Targets needed to bring the executable up to date
 
 all: server
