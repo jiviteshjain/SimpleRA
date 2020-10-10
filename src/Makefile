@@ -12,6 +12,9 @@ EXEC_DIR = ./executors
 EXEC_SRC := $(wildcard $(EXEC_DIR)/*.cpp)
 EXEC_OBJS = $(EXEC_SRC:.cpp=.o)
 
+ifdef DEBUG
+CXXFLAGS += $(DEBUGFLAGS)
+endif
 # ****************************************************
 # Macros
 
