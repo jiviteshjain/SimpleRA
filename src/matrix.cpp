@@ -93,6 +93,7 @@ bool Matrix::blockify() {
 
 
         fin.close();
+        return true;
     }
 
 
@@ -149,7 +150,7 @@ void Matrix::makePermanent() {
 
         this_page = bufferManager.getMatrixPage(this->matrixName, block_i, block_j).getMatrix();
         for (int k = 0; k < can_go_upto; k++) {
-            lines[k].insert(lines[k].end(), this_page[line_in_block + k].begin(), this_page[line_in_block + k].begin() + this->dimension - j);
+            lines[k].insert(lines[k].end(), this_page[line_in_block + k].begin(), this_page[line_in_block + k].begin() + (this->dimension - j));
         }
         this->writeLine(lines, fout);
         i = i + can_go_upto;
