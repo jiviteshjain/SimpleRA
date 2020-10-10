@@ -9,9 +9,9 @@ uint PRINT_COUNT = 20;
 Logger logger;
 vector<string> tokenizedQuery;
 ParsedQuery parsedQuery;
+BufferManager bufferManager; // Required for deleting TableCatalogue and MatrixCatalogue objects
 TableCatalogue tableCatalogue;
 MatrixCatalogue matrixCatalogue;
-BufferManager bufferManager;
 int MATRIX_PAGE_DIM;
 
 void doCommand()
