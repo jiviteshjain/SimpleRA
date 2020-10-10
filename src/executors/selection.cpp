@@ -103,36 +103,123 @@ bool evaluateBinOp(int value1, int value2, BinaryOperator binaryOperator)
     }
 }
 
+void retrieveResult(Table table, Table *resultantTable, int bucket)
+{
+    Cursor cursor = table.getCursor(bucket, 0);
+    vector<int> row = cursor.getNextInBucket();
+    while (!row.empty())
+    {
+        int value1 = row[table.getColumnIndex(parsedQuery.selectionFirstColumnName)];
+        int value2 = parsedQuery.selectionIntLiteral;
+        if (evaluateBinOp(value1, value2, parsedQuery.selectionBinaryOperator))
+            resultantTable->writeRow<int>(row);
+        row = cursor.getNextInBucket();
+    }
+}
+
+void saveResult(Table *resultantTable)
+{
+    if (resultantTable->blockify())
+        tableCatalogue.insertTable(resultantTable);
+    else
+    {
+        cout << "Empty Table" << endl;
+        delete resultantTable;
+    }
+}
+
 void executeSELECTION()
 {
     logger.log("executeSELECTION");
-
     Table table = *tableCatalogue.getTable(parsedQuery.selectionRelationName);
-    Table* resultantTable = new Table(parsedQuery.selectionResultRelationName, table.columns);
-    Cursor cursor = table.getCursor();
-    vector<int> row = cursor.getNext();
+    Table *resultantTable = new Table(parsedQuery.selectionResultRelationName, table.columns);
     int firstColumnIndex = table.getColumnIndex(parsedQuery.selectionFirstColumnName);
-    int secondColumnIndex;
-    if (parsedQuery.selectType == COLUMN)
-        secondColumnIndex = table.getColumnIndex(parsedQuery.selectionSecondColumnName);
-    while (!row.empty())
+    if (!table.indexed)
     {
-
-        int value1 = row[firstColumnIndex];
-        int value2;
-        if (parsedQuery.selectType == INT_LITERAL)
-            value2 = parsedQuery.selectionIntLiteral;
-        else
-            value2 = row[secondColumnIndex];
-        if (evaluateBinOp(value1, value2, parsedQuery.selectionBinaryOperator))
-            resultantTable->writeRow<int>(row);
-        row = cursor.getNext();
+        Cursor cursor = table.getCursor();
+        vector<int> row = cursor.getNext();
+        int secondColumnIndex;
+        if (parsedQuery.selectType == COLUMN)
+            secondColumnIndex = table.getColumnIndex(parsedQuery.selectionSecondColumnName);
+        while (!row.empty())
+        {
+            int value1 = row[firstColumnIndex];
+            int value2;
+            if (parsedQuery.selectType == INT_LITERAL)
+                value2 = parsedQuery.selectionIntLiteral;
+            else
+                value2 = row[secondColumnIndex];
+            if (evaluateBinOp(value1, value2, parsedQuery.selectionBinaryOperator))
+                resultantTable->writeRow<int>(row);
+            row = cursor.getNext();
+        }
+        saveResult(resultantTable);
+        return;
     }
-    if(resultantTable->blockify())
-        tableCatalogue.insertTable(resultantTable);
-    else{
-        cout<<"Empty Table"<<endl;
-        delete resultantTable;
+    else if (table.indexingStrategy == HASH)
+    {
+        if ((table.indexed && table.indexedColumn != parsedQuery.selectionFirstColumnName) || (parsedQuery.selectType == COLUMN) || (parsedQuery.selectionBinaryOperator == NOT_EQUAL))
+        {
+            Cursor cursor = table.getCursor(0, 0);
+            vector<int> row = cursor.getNextInAllBuckets();
+            int secondColumnIndex;
+            if (parsedQuery.selectType == COLUMN)
+                secondColumnIndex = table.getColumnIndex(parsedQuery.selectionSecondColumnName);
+            while (!row.empty())
+            {
+                int value1 = row[firstColumnIndex];
+                int value2;
+                if (parsedQuery.selectType == INT_LITERAL)
+                    value2 = parsedQuery.selectionIntLiteral;
+                else
+                    value2 = row[secondColumnIndex];
+                if (evaluateBinOp(value1, value2, parsedQuery.selectionBinaryOperator))
+                    resultantTable->writeRow<int>(row);
+                row = cursor.getNextInAllBuckets();
+            }
+            saveResult(resultantTable);
+        }
+        else if (parsedQuery.selectionBinaryOperator == EQUAL)
+        {
+            retrieveResult(table, resultantTable, table.hash(parsedQuery.selectionIntLiteral));
+            saveResult(resultantTable);
+            return;
+        }
+        else if (parsedQuery.selectionBinaryOperator == LESS_THAN)
+        {
+            for (int i = *(table.distinctValuesInColumns[firstColumnIndex].begin()), j = 0; i < parsedQuery.selectionIntLiteral, j < table.M; i++, j++)
+            {
+                retrieveResult(table, resultantTable, table.hash(i));
+            }
+            saveResult(resultantTable);
+            return;
+        }
+        else if (parsedQuery.selectionBinaryOperator == LEQ)
+        {
+            for (int i = *(table.distinctValuesInColumns[firstColumnIndex].begin()), j = 0; i <= parsedQuery.selectionIntLiteral, j < table.M; i++, j++)
+            {
+                retrieveResult(table, resultantTable, table.hash(i));
+            }
+            saveResult(resultantTable);
+            return;
+        }
+        else if (parsedQuery.selectionBinaryOperator == GREATER_THAN)
+        {
+            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < *(table.distinctValuesInColumns[firstColumnIndex].end()), j < table.M; i++, j++)
+            {
+                retrieveResult(table, resultantTable, table.hash(i));
+            }
+            saveResult(resultantTable);
+            return;
+        }
+        else if (parsedQuery.selectionBinaryOperator == GEQ)
+        {
+            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < *(table.distinctValuesInColumns[firstColumnIndex].end()), j < table.M; i++, j++)
+            {
+                retrieveResult(table, resultantTable, table.hash(i));
+            }
+            saveResult(resultantTable);
+            return;
+        }
     }
-    return;
 }

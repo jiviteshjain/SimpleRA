@@ -70,7 +70,6 @@ void executeINDEX()
 {
     Table* table = tableCatalogue.getTable(parsedQuery.indexRelationName);
     table->indexingStrategy = parsedQuery.indexingStrategy;
-    cout<<"Table = "<<table->tableName<<endl<<"Strategy = "<<table->indexingStrategy<<endl;
     if (table->indexingStrategy == NOTHING)
     {
         table->indexed = false;
@@ -87,7 +86,6 @@ void executeINDEX()
             ;
             // bPlusTree(atoi(tokenizedQuery[8].c_str()));
     }
-    cout<<"Column = "<<table->indexedColumn<<endl<<"Indexed = "<<table->indexed<<endl;
     logger.log("executeINDEX");
     return;
 }

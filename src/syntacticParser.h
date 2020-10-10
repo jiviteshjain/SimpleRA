@@ -140,6 +140,6 @@ bool syntacticParseTRANSPOSE();
 
 bool isFileExists(string tableName);
 bool isQueryFile(string fileName);
-DataType checkFileType(string matrixName);
+bool isMatrix(string matrixName);
 
 #endif

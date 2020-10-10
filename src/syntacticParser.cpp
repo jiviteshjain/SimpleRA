@@ -161,7 +161,7 @@ bool isQueryFile(string fileName){
  * @return MATRIX 
  */
 
-DataType checkFileType(string matrixName)
+bool isMatrix(string matrixName)
 {
     string fileName = "../data/" + matrixName + ".csv";
     ifstream fin(fileName, ios::in);
@@ -173,10 +173,10 @@ DataType checkFileType(string matrixName)
     try
     {
         stoi(firstWord);
-        return MATRIX;
+        return true;
     }
     catch (exception e)
     {
-        return TABLE;
+        return false;
     }
 }

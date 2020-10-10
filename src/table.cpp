@@ -101,7 +101,7 @@ bool Table::blockify() {
     vector<int> row(this->columnCount, 0);
     vector<vector<int>> rowsInPage(this->maxRowsPerBlock, row);
     int pageCounter = 0;
-    unordered_set<int> dummy;
+    set<int> dummy;
     dummy.clear();
     this->distinctValuesInColumns.assign(this->columnCount, dummy);
     this->distinctValuesPerColumnCount.assign(this->columnCount, 0);
@@ -132,7 +132,7 @@ bool Table::blockify() {
 
     if (this->rowCount == 0)
         return false;
-    this->distinctValuesInColumns.clear();
+    // this->distinctValuesInColumns.clear();
     return true;
 }
 
@@ -213,19 +213,54 @@ void Table::print() {
 }
 
 /**
- * @brief This function returns one row of the table using the cursor object. It
- * returns an empty row is all rows have been read.
+ * @brief This function checks if cursor pageIndex is less than the table pageIndex, 
+ * and calls the nextPage function of the cursor with incremented pageIndex.
  *
  * @param cursor 
  * @return vector<int> 
  */
 void Table::getNextPage(Cursor *cursor) {
-    logger.log("Table::getNext");
+    logger.log("Table::getNextPage");
 
     if (cursor->pageIndex < this->blockCount - 1) {
         cursor->nextPage(cursor->pageIndex + 1);
     }
 }
+
+/**
+ * @brief This function checks if cursor chainCount is less than the bucket chainCount, 
+ * and calls the nextPage function of the cursor with incremented chainCount.
+ *
+ * @param cursor 
+ * @return void 
+ */
+void Table::getNextPage(Cursor *cursor, int chainCount) {
+    logger.log("Table::getNextPage");
+    if (cursor->chainCount < this->blocksInBuckets[cursor->bucket].size() - 1) {
+        cursor->nextPage(cursor->chainCount + 1);
+    }
+}
+
+/**
+ * @brief This function checks if cursor chainCount is less than the bucket chainCount, 
+ * and calls the nextPage function of the cursor with incremented chainCount. If the
+ * bucket has been fully read, it calls the nextPage function of the cursor with
+ * incremented bucketCount.
+ *
+ * @param cursor 
+ * @return void 
+ */
+void Table::getNextPage(Cursor *cursor, int bucket, int chainCount) {
+    logger.log("Table::getNextPage");
+
+    if (cursor->chainCount < this->blocksInBuckets[cursor->bucket].size() - 1) {
+        cursor->nextPage(cursor->bucket, cursor->chainCount + 1);
+    }
+    else if (cursor->bucket < M - 1) {
+        cursor->nextPage(cursor->bucket + 1, 0);
+    }
+}
+
 
 /**
  * @brief called when EXPORT command is invoked to move source file to "data"
@@ -295,6 +330,19 @@ Cursor Table::getCursor() {
     Cursor cursor(this->tableName, 0);
     return cursor;
 }
+
+/**
+ * @brief Function that returns a cursor that reads rows from the blocks of a bucket 
+ * @param bucket
+ * @param chainCount 
+ * @return Cursor 
+ */
+Cursor Table::getCursor(int bucket, int chainCount) {
+    logger.log("Table::getCursor");
+    Cursor cursor(this->tableName, bucket, chainCount);
+    return cursor;
+}
+
 /**
  * @brief Function that returns the index of column indicated by columnName
  * 
@@ -321,8 +369,8 @@ int Table::getColumnIndex(string columnName) {
 int Table::hash(int key) {
     logger.log("Table::hash");
 
-    int first = key % this->M;
-    return (first < this->N ? key % (2 * M) : first);
+    int first = MOD(key, this->M);
+    return (first < this->N ? MOD(key, 2 * M) : first);
 }
 
 

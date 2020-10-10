@@ -14,11 +14,17 @@ class Cursor{
     int pageIndex;
     string tableName;
     int pagePointer;
-
+    int bucket;
+    int chainCount;
     public:
     Cursor(string tableName, int pageIndex);
-    vector<int> getNext();
+    Cursor(string tableName, int bucket, int chainCount);
+    vector<int> getNext();    
+    vector<int> getNextInBucket();
+    vector<int> getNextInAllBuckets();    
     void nextPage(int pageIndex);
+    void nextPage(int bucket, int chainCount);
+
 };
 
 #endif

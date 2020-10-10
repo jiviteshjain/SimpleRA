@@ -14,4 +14,6 @@ extern MatrixCatalogue matrixCatalogue;
 extern BufferManager bufferManager;
 extern int MATRIX_PAGE_DIM;
 
+#define MOD(a, m) ((((a) % (m)) + (m)) % (m))
+
 #endif

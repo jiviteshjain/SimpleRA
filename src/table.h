@@ -19,9 +19,10 @@ enum IndexingStrategy {
  *
  */
 class Table {
-    vector<unordered_set<int>> distinctValuesInColumns;
 
    public:
+    //TODO: Decide if unordered or ordered. If unordered, rewrite selection loops, change line 104 of table.cpp
+    vector<set<int>> distinctValuesInColumns;
     string sourceFileName = "";
     string tableName = "";
     vector<string> columns;
@@ -48,7 +49,11 @@ class Table {
     void makePermanent();
     bool isPermanent();
     void getNextPage(Cursor *cursor);
+    void getNextPage(Cursor *cursor, int chainCount);
+    void getNextPage(Cursor *cursor, int bucket, int chainCount);
+
     Cursor getCursor();
+    Cursor getCursor(int bucket, int chainCount);
     int getColumnIndex(string columnName);
     void unload();
 
