@@ -42,6 +42,7 @@ class BufferManager{
     BufferManager();
     void deleteFile(string fileName);
     void push(Pages page, bool deferWrite=true);
+    void pop(const string& fileName);
     // void writeTablePage(string tableName, vector<vector<int>> rows);
     ;
 

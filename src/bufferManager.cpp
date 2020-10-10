@@ -226,6 +226,7 @@ void BufferManager::deleteFile(string fileName) {
 void BufferManager::deleteTableFile(string tableName, int pageIndex) {
     logger.log("BufferManager::deleteTableFile");
     string fileName = TABLE_PAGE_NAME(tableName, pageIndex);
+    this->pop(fileName);
     this->deleteFile(fileName);
 }
 
@@ -233,6 +234,7 @@ void BufferManager::deleteMatrixFile(const string& matrixName, int rowIndex, int
     logger.log("BufferManager::deleteMatrixFile");
 
     string fileName = MATRIX_PAGE_NAME(matrixName, rowIndex, colIndex);
+    this->pop(fileName);
     this->deleteFile(fileName);
 }
 
@@ -240,9 +242,9 @@ void BufferManager::deleteHashFile(const string& tableName, int bucket, int chai
     logger.log("BufferManager::deleteHashFile");
 
     string fileName = HASH_PAGE_NAME(tableName, bucket, chainCount);
+    this->pop(fileName);
     this->deleteFile(fileName);
 }
-// TODO: DELETE FROM BUFFER ALSO
 
 void BufferManager::push(Pages page, bool deferWrite) {
     if (!deferWrite) {
@@ -267,4 +269,15 @@ void BufferManager::push(Pages page, bool deferWrite) {
 
     // insert this page
     this->pages.emplace_back(page);
+}
+
+void BufferManager::pop(const string& fileName) {
+    // DOES NOT WRITEBACK
+    
+    for (int i = 0; i < this->pages.size(); i++) {
+        if (getPageName(this->pages[i]) == fileName) {
+            this->pages.erase(this->pages.begin() + i);
+            return;
+        }
+    }
 }

@@ -12,11 +12,12 @@ EXEC_DIR = ./executors
 EXEC_SRC := $(wildcard $(EXEC_DIR)/*.cpp)
 EXEC_OBJS = $(EXEC_SRC:.cpp=.o)
 
+# ****************************************************
+# Macros
+
 ifdef DEBUG
 CXXFLAGS += $(DEBUGFLAGS)
 endif
-# ****************************************************
-# Macros
 ifndef DEFER_WRITE
 CXXFLAGS += -D DEFER_WRITE
 else
