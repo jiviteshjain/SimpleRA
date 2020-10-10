@@ -3,6 +3,7 @@
 
 CXX = g++
 CXXFLAGS = -g -std=c++17 -I .
+DEBUGFLAGS = -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
 
 SRC := $(wildcard *.cpp)
 OBJS = $(SRC:.cpp=.o)
@@ -11,6 +12,9 @@ EXEC_DIR = ./executors
 EXEC_SRC := $(wildcard $(EXEC_DIR)/*.cpp)
 EXEC_OBJS = $(EXEC_SRC:.cpp=.o)
 
+ifdef DEBUG
+CXXFLAGS += $(DEBUGFLAGS)
+endif
 # ****************************************************
 # Targets needed to bring the executable up to date
 
