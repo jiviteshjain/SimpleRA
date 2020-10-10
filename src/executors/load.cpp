@@ -31,7 +31,7 @@ bool semanticParseLOAD()
         return false;
     }
 
-    if (checkFileType(parsedQuery.loadRelationName) != TABLE)
+    if (isMatrix(parsedQuery.loadRelationName))
     {
         cout << "SEMANTIC ERROR: The file isn't a relation" << endl;
         return false;
