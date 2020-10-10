@@ -121,9 +121,9 @@ void saveResult(Table *resultantTable)
 {
     if (resultantTable->blockify())
         tableCatalogue.insertTable(resultantTable);
-    else
-    {
-        cout << "Empty Table" << endl;
+    else{
+        cout<<"Empty Table"<<endl;
+        resultantTable->unload();
         delete resultantTable;
     }
 }
