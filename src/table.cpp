@@ -392,13 +392,13 @@ void Table::linearHash(const string& columnName, int bucketCount) {
 
     // set metadata
     this->indexed = true;
-    this->indexedColumn = columnName;
+    this->indexedColumn = this->getColumnIndex(columnName);
     this->indexingStrategy = HASH;
 
     this->M = bucketCount;
     this->blocksInBuckets = vector<vector<int>> (this->M);
 
-    int col = this->getColumnIndex(columnName);
+    int col = this->indexedColumn;
     Cursor cursor (this->tableName, 0);
 
     vector<int> row;
@@ -457,4 +457,38 @@ bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
     rows.push_back(row);
     bufferManager.writeHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1, rows);
     return newPage;
+}
+
+/**
+ * @brief Inserts a row into the table
+ * 
+ * @param row
+ * @param
+ * 
+ * @return void
+ */
+bool Table::insert(const vector<int>& row) {
+    if (row.size() != this->columnCount) {
+        return false;
+    }
+
+    if (this->indexingStrategy == NOTHING) {
+        ; // TODO: insert into a normal table
+    } else if (this->indexingStrategy == HASH) {
+        int bucket = this->hash(row[this->indexedColumn]);
+        // because row is large enough, this is always in bounds
+        bool overflow = this->insertIntoHashBucket(row, bucket);
+
+        if (overflow) {
+            // split
+        }
+
+    } else if (this->indexingStrategy == BTREE) {
+        ;
+    }
+    return true;
+}
+
+void Table::linearHashSplit() {
+    
 }

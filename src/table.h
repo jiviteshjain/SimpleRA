@@ -33,7 +33,7 @@ class Table {
     uint maxRowsPerBlock = 0;
     vector<uint> rowsPerBlockCount;
     bool indexed = false;
-    string indexedColumn = "";
+    int indexedColumn = -1;
     IndexingStrategy indexingStrategy = NOTHING;
 
     bool extractColumnNames(string firstLine);
@@ -56,6 +56,7 @@ class Table {
     Cursor getCursor(int bucket, int chainCount);
     int getColumnIndex(string columnName);
     void unload();
+    bool insert(const vector<int>& row);
 
     // FOR LINEAR HASHING
 
@@ -69,6 +70,7 @@ class Table {
     int hash(int key);
     void linearHash(const string &columnName, int bucketCount);
     bool insertIntoHashBucket(const vector<int>& row, int bucket);
+    void linearHashSplit();
 
 
     /**
