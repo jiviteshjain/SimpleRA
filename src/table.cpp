@@ -83,7 +83,7 @@ bool Table::extractColumnNames(string firstLine) {
         this->columns.emplace_back(word);
     }
     this->columnCount = this->columns.size();
-    this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (32 * this->columnCount));
+    this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (sizeof(int) * columnCount));
     return true;
 }
 
