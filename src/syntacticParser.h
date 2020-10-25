@@ -16,8 +16,10 @@ enum QueryType
 {
     CLEAR,
     CROSS,
+    DELETE,
     DISTINCT,
     EXPORT,
+    INSERT,
     INDEX,
     JOIN,
     LIST,
@@ -70,6 +72,9 @@ public:
     string crossFirstRelationName = "";
     string crossSecondRelationName = "";
 
+    string deleteRelationName = "";
+    vector<int> deleteRow;
+
     string distinctResultRelationName = "";
     string distinctRelationName = "";
 
@@ -78,6 +83,9 @@ public:
     IndexingStrategy indexingStrategy = NOTHING;
     string indexColumnName = "";
     string indexRelationName = "";
+
+    string insertRelationName = "";
+    vector<int> insertRow;
 
     BinaryOperator joinBinaryOperator = NO_BINOP_CLAUSE;
     string joinResultRelationName = "";
@@ -123,9 +131,11 @@ public:
 bool syntacticParse();
 bool syntacticParseCLEAR();
 bool syntacticParseCROSS();
+bool syntacticParseDELETE();
 bool syntacticParseDISTINCT();
 bool syntacticParseEXPORT();
 bool syntacticParseINDEX();
+bool syntacticParseINSERT();
 bool syntacticParseJOIN();
 bool syntacticParseLIST();
 bool syntacticParseLOAD();

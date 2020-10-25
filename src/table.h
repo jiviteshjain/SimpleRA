@@ -58,7 +58,7 @@ class Table {
     string getIndexedColumn();
     void unload();
     bool insert(const vector<int>& row);
-
+    bool remove(const vector<int>& row);
     // FOR LINEAR HASHING
 
     int M = 0; // different from blockCount, as blockCount includes overflow blocks as well

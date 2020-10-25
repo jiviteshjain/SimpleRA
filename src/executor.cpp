@@ -5,8 +5,10 @@ void executeCommand(){
     switch(parsedQuery.queryType){
         case CLEAR: executeCLEAR(); break;
         case CROSS: executeCROSS(); break;
+        case DELETE: executeDELETE(); break;
         case DISTINCT: executeDISTINCT(); break;
         case EXPORT: executeEXPORT(); break;
+        case INSERT: executeINSERT(); break;
         case INDEX: executeINDEX(); break;
         case JOIN: executeJOIN(); break;
         case LIST: executeLIST(); break;

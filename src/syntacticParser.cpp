@@ -13,8 +13,12 @@ bool syntacticParse()
 
     if (possibleQueryType == "CLEAR")
         return syntacticParseCLEAR();
+    else if (possibleQueryType == "DELETE")
+        return syntacticParseDELETE();
     else if (possibleQueryType == "INDEX")
         return syntacticParseINDEX();
+    else if (possibleQueryType == "INSERT")
+        return syntacticParseINSERT();
     else if (possibleQueryType == "LIST")
         return syntacticParseLIST();
     else if (possibleQueryType == "LOAD" && tokenizedQuery[1] == "MATRIX")

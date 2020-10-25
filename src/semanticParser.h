@@ -7,9 +7,11 @@ bool semanticParse();
 
 bool semanticParseCLEAR();
 bool semanticParseCROSS();
+bool semanticParseDELETE();
 bool semanticParseDISTINCT();
 bool semanticParseEXPORT();
 bool semanticParseINDEX();
+bool semanticParseINSERT();
 bool semanticParseJOIN();
 bool semanticParseLIST();
 bool semanticParseLOAD();
