@@ -30,14 +30,14 @@ TablePage::TablePage(string tableName, int pageIndex) {
     this->tableName = tableName;
     this->pageIndex = pageIndex;
     this->pageName = TABLE_PAGE_NAME(tableName, pageIndex);
-    Table table = *tableCatalogue.getTable(tableName);
-    this->columnCount = table.columnCount;
-    uint maxRowCount = table.maxRowsPerBlock;
+    Table *table = tableCatalogue.getTable(tableName);
+    this->columnCount = table->columnCount;
+    uint maxRowCount = table->maxRowsPerBlock;
     vector<int> row(columnCount, 0);
     this->data.assign(maxRowCount, row);
 
     ifstream fin(pageName, ios::in);
-    this->rowCount = table.rowsPerBlockCount[pageIndex];
+    this->rowCount = table->rowsPerBlockCount[pageIndex];
     int number;
     for (uint rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
         for (int columnCounter = 0; columnCounter < columnCount; columnCounter++) {
@@ -152,11 +152,11 @@ HashPage::HashPage(const string& tableName, int bucket, int chainCount) {
     this->bucket = bucket;
     this->chainCount = chainCount;
     this->pageName = HASH_PAGE_NAME(this->tableName, this->bucket, this->chainCount);
-    Table table = *tableCatalogue.getTable(tableName);
-    this->columnCount = table.columnCount;
-    uint maxRowCount = table.maxRowsPerBlock;
+    Table *table = tableCatalogue.getTable(tableName);
+    this->columnCount = table->columnCount;
+    uint maxRowCount = table->maxRowsPerBlock;
     vector<int> row(columnCount, 0);
-    this->rowCount = table.blocksInBuckets[bucket][chainCount];
+    this->rowCount = table->blocksInBuckets[bucket][chainCount];
     this->data.assign(this->rowCount, row);
 
     ifstream fin(pageName, ios::in);

@@ -26,15 +26,14 @@ bool semanticParseINSERT()
         cout << "SEMANTIC ERROR: Relation doesn't exist" << endl;
         return false;
     }
-    Table table = *tableCatalogue.getTable(parsedQuery.insertRelationName);
-    if (tokenizedQuery.size() - 4 != table.columnCount)
+    Table* table = tableCatalogue.getTable(parsedQuery.insertRelationName);
+    if (tokenizedQuery.size() - 4 != table->columnCount)
     {
         cout << "SEMANTIC ERROR: Incorrect number of values entered" << endl;
         return false;
     }
 
-    parsedQuery.insertRow.clear();
-    for (int i = tokenizedQuery.size() - table.columnCount; i < tokenizedQuery.size(); i++)
+    for (int i = tokenizedQuery.size() - table->columnCount; i < tokenizedQuery.size(); i++)
         parsedQuery.insertRow.push_back(stoi(tokenizedQuery[i]));
 
     return true;
@@ -43,6 +42,6 @@ bool semanticParseINSERT()
 void executeINSERT()
 {
     logger.log("executeINSERT");
-    Table table = *tableCatalogue.getTable(parsedQuery.insertRelationName);
-    cout<<table.insert(parsedQuery.insertRow)<<endl;
+    Table* table = tableCatalogue.getTable(parsedQuery.insertRelationName);
+    table->insert(parsedQuery.insertRow);
 }

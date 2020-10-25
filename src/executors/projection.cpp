@@ -35,10 +35,10 @@ bool semanticParsePROJECTION()
         return false;
     }
 
-    Table table = *tableCatalogue.getTable(parsedQuery.projectionRelationName);
+    Table *table = tableCatalogue.getTable(parsedQuery.projectionRelationName);
     for (auto col : parsedQuery.projectionColumnList)
     {
-        if (!table.isColumn(col))
+        if (!table->isColumn(col))
         {
             cout << "SEMANTIC ERROR: Column doesn't exist in relation";
             return false;
@@ -51,12 +51,12 @@ void executePROJECTION()
 {
     logger.log("executePROJECTION");
     Table* resultantTable = new Table(parsedQuery.projectionResultRelationName, parsedQuery.projectionColumnList);
-    Table table = *tableCatalogue.getTable(parsedQuery.projectionRelationName);
-    Cursor cursor = table.getCursor();
+    Table *table = tableCatalogue.getTable(parsedQuery.projectionRelationName);
+    Cursor cursor = table->getCursor();
     vector<int> columnIndices;
     for (int columnCounter = 0; columnCounter < parsedQuery.projectionColumnList.size(); columnCounter++)
     {
-        columnIndices.emplace_back(table.getColumnIndex(parsedQuery.projectionColumnList[columnCounter]));
+        columnIndices.emplace_back(table->getColumnIndex(parsedQuery.projectionColumnList[columnCounter]));
     }
     vector<int> row = cursor.getNext();
     vector<int> resultantRow(columnIndices.size(), 0);
