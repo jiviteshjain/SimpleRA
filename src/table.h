@@ -55,6 +55,7 @@ class Table {
     Cursor getCursor();
     Cursor getCursor(int bucket, int chainCount);
     int getColumnIndex(string columnName);
+    string getIndexedColumn();
     void unload();
     bool insert(const vector<int>& row);
 

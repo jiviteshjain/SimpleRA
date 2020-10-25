@@ -191,6 +191,19 @@ void Table::renameColumn(string fromColumnName, string toColumnName) {
 }
 
 /**
+ * @brief Returns the name of the indexed column. For external use, member methods are
+ * advised to directly access the internal data.
+ *
+ * @return indexed column name
+ */
+string Table::getIndexedColumn() {
+    if (this->indexingStrategy == NOTHING) {
+        return "";
+    }
+    return this->columns[this->indexedColumn];
+}
+
+/**
  * @brief Function prints the first few rows of the table. If the table contains
  * more rows than PRINT_COUNT, exactly PRINT_COUNT rows are printed, else all
  * the rows are printed.
@@ -432,7 +445,7 @@ void Table::linearHash(const string& columnName, int bucketCount) {
  * @return bool indicating an overflow
  */
 bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
-    if (bucket >= this->M) {
+    if (bucket >= this->blocksInBuckets.size()) {
         return false; // TODO: raise an error somehow
     }
 
@@ -486,9 +499,59 @@ bool Table::insert(const vector<int>& row) {
     } else if (this->indexingStrategy == BTREE) {
         ;
     }
+
+    // Update metadata
+    this->updateStatistics(row);
+
     return true;
 }
 
 void Table::linearHashSplit() {
+    this->blocksInBuckets.push_back(vector<int> (0)); // M + N
+    this->blocksInBuckets.push_back(vector<int>(0)); // M + N + 1 (temporary)
+
+    // rehash
+    Cursor cursor = this->getCursor(this->N, 0);
+    auto row = cursor.getNextInBucket();
+    while (!row.empty()) {
+        int hashkey = row[this->indexedColumn];
+        int hashval = MOD(hashkey, 2 * this->M);
+
+        if (hashval == this->N) {
+            this->insertIntoHashBucket(row, this->M + this->N + 1);
+        } else {
+            this->insertIntoHashBucket(row, this->M + this->N);
+        }
+
+        row = cursor.getNextInBucket();
+    }
+
+    // delete original buckets
+    for (int i = 0; i < this->blocksInBuckets[this->N].size(); i++) {
+        bufferManager.deleteHashFile(this->tableName, this->N, i);
+    }
+
+    // rename buckets
+    for (int i = 0; i < this->blocksInBuckets.back().size(); i++) {
+        auto data = bufferManager.getHashPage(this->tableName, this->M + this->N + 1, i).data;
+        bufferManager.deleteHashFile(this->tableName, this->M + this->N + 1, i);
+
+        bufferManager.writeHashPage(this->tableName, this->N, i, data);
+    }
+
+    // fix metadata
+    this->blocksInBuckets[this->N] = this->blocksInBuckets.back();
+    this->blocksInBuckets.pop_back();
     
+    this->blockCount = 0;
+    for (auto &b : this->blocksInBuckets) {
+        this->blockCount += b.size();
+    }
+
+    this->N++;
+    if (this->N == this->M) {
+        this->M++;
+        this->N = 0;
+    }
+
 }

@@ -158,7 +158,7 @@ void executeSELECTION()
     }
     else if (table.indexingStrategy == HASH)
     {
-        if ((table.indexed && table.indexedColumn != parsedQuery.selectionFirstColumnName) || (parsedQuery.selectType == COLUMN) || (parsedQuery.selectionBinaryOperator == NOT_EQUAL))
+        if ((table.indexed && table.getIndexedColumn() != parsedQuery.selectionFirstColumnName) || (parsedQuery.selectType == COLUMN) || (parsedQuery.selectionBinaryOperator == NOT_EQUAL))
         {
             Cursor cursor = table.getCursor(0, 0);
             vector<int> row = cursor.getNextInAllBuckets();
