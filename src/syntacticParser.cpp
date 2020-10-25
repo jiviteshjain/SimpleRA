@@ -80,6 +80,9 @@ void ParsedQuery::clear()
     this->crossFirstRelationName = "";
     this->crossSecondRelationName = "";
 
+    this->deleteRelationName = "";
+    this->deleteRow.clear();
+
     this->distinctResultRelationName = "";
     this->distinctRelationName = "";
 
@@ -88,6 +91,9 @@ void ParsedQuery::clear()
     this->indexingStrategy = NOTHING;
     this->indexColumnName = "";
     this->indexRelationName = "";
+
+    this->insertRelationName = "";
+    this->insertRow.clear();
 
     this->joinBinaryOperator = NO_BINOP_CLAUSE;
     this->joinResultRelationName = "";
