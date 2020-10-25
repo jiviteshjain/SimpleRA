@@ -598,3 +598,60 @@ void Table::linearHashSplit() {
     }
 
 }
+
+/**
+ * @brief Deletes a row, if exists, from the table
+ * 
+ * @param row
+ * 
+ * @return bool true if the row was deleted
+ */
+bool Table::remove(const vector<int>& row) {
+    // invalid row
+    if (row.size() != this->columnCount) {
+        return false;
+    }
+
+    // heuristic for row not existing
+    for (int i = 0; i < this->columnCount; i++) {
+        if (this->distinctValuesInColumns[i].find(row[i]) == this->distinctValuesInColumns[i].end()) {
+            return false;
+        }
+    }
+
+    bool foundAtleastOnce = false;
+    
+    if (this->indexingStrategy == NOTHING) {
+        ;
+        // TODO
+    } else if (this->indexingStrategy == HASH) {
+
+        // check corresponding bucket
+        // does not use cursor because have to modify page if row was actually found
+        int bucket = this->hash(row[this->indexedColumn]);
+        
+        for (int i = 0; i < this->blocksInBuckets[bucket].size(); i++) {
+            
+            bool foundInPage = false;
+            auto data = bufferManager.getHashPage(this->tableName, bucket, i).data;
+            
+            for (auto it = data.begin(); it < data.end(); it++) {
+                if (*it == row) {
+                    data.erase(it);
+                    foundInPage = true;
+                }
+            }
+
+            if (foundInPage) {
+                bufferManager.writeHashPage(this->tableName, bucket, i, data);
+            }
+
+            foundAtleastOnce |= foundInPage;
+        }
+    }
+
+    return foundAtleastOnce;
+
+
+
+}
