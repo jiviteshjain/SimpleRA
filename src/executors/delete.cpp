@@ -33,6 +33,7 @@ bool semanticParseDELETE()
         return false;
     }
 
+    parsedQuery.deleteRow.clear();
     for (int i = tokenizedQuery.size() - table.columnCount; i < tokenizedQuery.size(); i++)
         parsedQuery.deleteRow.push_back(stoi(tokenizedQuery[i]));
     

@@ -635,10 +635,13 @@ bool Table::remove(const vector<int>& row) {
             bool foundInPage = false;
             auto data = bufferManager.getHashPage(this->tableName, bucket, i).data;
             
-            for (auto it = data.begin(); it < data.end(); it++) {
+            auto it = data.begin();
+            while (it != data.end()) {
                 if (*it == row) {
-                    data.erase(it);
+                    it = data.erase(it);
                     foundInPage = true;
+                } else {
+                    it++;
                 }
             }
 
