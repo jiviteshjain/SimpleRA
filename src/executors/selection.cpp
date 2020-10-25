@@ -205,7 +205,7 @@ void executeSELECTION()
         }
         else if (parsedQuery.selectionBinaryOperator == GREATER_THAN)
         {
-            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < *(table->distinctValuesInColumns[firstColumnIndex].end()), j < table->M; i++, j++)
+            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < *(table->distinctValuesInColumns[firstColumnIndex].rbegin()), j < table->M; i++, j++)
             {
                 retrieveResult(table, resultantTable, table->hash(i));
             }
@@ -214,7 +214,7 @@ void executeSELECTION()
         }
         else if (parsedQuery.selectionBinaryOperator == GEQ)
         {
-            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < *(table->distinctValuesInColumns[firstColumnIndex].end()), j < table->M; i++, j++)
+            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < *(table->distinctValuesInColumns[firstColumnIndex].rbegin()), j < table->M; i++, j++)
             {
                 retrieveResult(table, resultantTable, table->hash(i));
             }
