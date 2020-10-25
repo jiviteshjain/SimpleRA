@@ -33,6 +33,7 @@ bool semanticParseINSERT()
         return false;
     }
 
+    parsedQuery.insertRow.clear();
     for (int i = tokenizedQuery.size() - table.columnCount; i < tokenizedQuery.size(); i++)
         parsedQuery.insertRow.push_back(stoi(tokenizedQuery[i]));
 
