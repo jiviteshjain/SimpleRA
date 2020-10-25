@@ -216,12 +216,23 @@ void Table::print() {
     //print headings
     this->writeRow(this->columns, cout);
 
-    Cursor cursor(this->tableName, 0);
-    vector<int> row;
-    for (int rowCounter = 0; rowCounter < count; rowCounter++) {
-        row = cursor.getNext();
-        this->writeRow(row, cout);
+    if (this->indexingStrategy == NOTHING) {
+        Cursor cursor(this->tableName, 0);
+        vector<int> row;
+        for (int rowCounter = 0; rowCounter < count; rowCounter++) {
+            row = cursor.getNext();
+            this->writeRow(row, cout);
+        }
+    } else if (this->indexingStrategy == HASH) {
+        Cursor cursor =this->getCursor(0, 0);
+        vector<int> row;
+        for (int i = 0; i < count; i++) {
+            row = cursor.getNextInAllBuckets();
+            this->writeRow(row, cout);
+        }
+        // TODO: rewrite previous block like this
     }
+
     printRowCount(this->rowCount);
 }
 
@@ -401,7 +412,7 @@ void Table::linearHash(const string& columnName, int bucketCount) {
     if (this->rowCount == 0) {
         return;
     }
-    cout << "DEBUG" << this->rowCount;
+    // cout << "DEBUG" << this->rowCount; // TODO: Check for correctness
 
     // set metadata
     this->indexed = true;

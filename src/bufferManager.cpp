@@ -182,7 +182,7 @@ void BufferManager::writeTablePage(string tableName, int pageIndex, vector<vecto
 }
 
 void BufferManager::writeHashPage(const string& tableName, int bucket, int chainCount, const vector<vector<int>>& data) {
-    cout << "DEBUGPAGESIZE" << data.size() << endl;
+    // cout << "DEBUGPAGESIZE" << data.size() << endl; // TODO: check for correctness
     logger.log("BufferManager::writeHashPage");
     HashPage page(tableName, bucket, chainCount, data);
 
