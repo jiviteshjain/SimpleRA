@@ -455,33 +455,65 @@ void Table::linearHash(const string& columnName, int bucketCount) {
  * 
  * @return bool indicating an overflow
  */
+
 bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
     if (bucket >= this->blocksInBuckets.size()) {
-        return false; // TODO: raise an error somehow
+        return false;  // TODO: raise an error somehow
     }
 
-    bool newPage = false;
+    bool found = false;
+    
     vector<vector<int>> rows (0);
+    int chainCount;
 
-    if (!this->blocksInBuckets[bucket].empty() && this->blocksInBuckets[bucket].back() < this->maxRowsPerBlock) {
-        // Fit in the last block
-        
-        rows = bufferManager.getHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1).data;
-        // TODO: Exception handling, page not found
+    for (chainCount = 0; chainCount < this->blocksInBuckets[bucket].size(); chainCount++) {
+        if (blocksInBuckets[bucket][chainCount] < this->maxRowsPerBlock) {
+            rows = bufferManager.getHashPage(this->tableName, bucket, chainCount).data;
+            this->blocksInBuckets[bucket][chainCount]++;
 
-        this->blocksInBuckets[bucket].back() = this->blocksInBuckets[bucket].back() + 1;
+            found = true;
+            break;
+        }
+    }
 
-    } else {
-        // allocate a new block
-
+    if (!found) {
         this->blocksInBuckets[bucket].push_back(1);
-        newPage = true;
+        chainCount = blocksInBuckets[bucket].size() - 1;
     }
 
     rows.push_back(row);
-    bufferManager.writeHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1, rows);
-    return newPage;
+    bufferManager.writeHashPage(this->tableName, bucket, chainCount, rows);
+
+    return !found;
 }
+
+// bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
+//     if (bucket >= this->blocksInBuckets.size()) {
+//         return false; // TODO: raise an error somehow
+//}
+
+//     bool newPage = false;
+//     vector<vector<int>> rows (0);
+
+//     if (!this->blocksInBuckets[bucket].empty() && this->blocksInBuckets[bucket].back() < this->maxRowsPerBlock) {
+//         // Fit in the last block
+        
+//         rows = bufferManager.getHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1).data;
+//         // TODO: Exception handling, page not found
+
+//         this->blocksInBuckets[bucket].back() = this->blocksInBuckets[bucket].back() + 1;
+
+//     } else {
+//         // allocate a new block
+
+//         this->blocksInBuckets[bucket].push_back(1);
+//         newPage = true;
+//     }
+
+//     rows.push_back(row);
+//     bufferManager.writeHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1, rows);
+//     return newPage;
+// }
 
 /**
  * @brief Inserts a row into the table
