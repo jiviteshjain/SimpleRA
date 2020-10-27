@@ -63,6 +63,7 @@ class Table {
 
     int M = 0; // different from blockCount, as blockCount includes overflow blocks as well
     int N = 0; // all blocks from 0 to N-1 have been split
+    int initialBucketCount = 0;
     // TODO: Make these private
 
     // We don't use rowsPerBlockCount, because the blocks now have overflow chains and cannot be numbered sequentially. Instead use blocksInBuckets.
@@ -72,7 +73,7 @@ class Table {
     void linearHash(const string &columnName, int bucketCount);
     bool insertIntoHashBucket(const vector<int>& row, int bucket);
     void linearHashSplit();
-
+    void linearHashCombine();
 
     /**
  * @brief Static function that takes a vector of valued and prints them out in a

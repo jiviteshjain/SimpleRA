@@ -420,6 +420,7 @@ void Table::linearHash(const string& columnName, int bucketCount) {
     this->indexingStrategy = HASH;
 
     this->M = bucketCount;
+    this->initialBucketCount = bucketCount;
     this->blocksInBuckets = vector<vector<int>> (this->M);
 
     int col = this->indexedColumn;
@@ -653,8 +654,48 @@ bool Table::remove(const vector<int>& row) {
         }
     }
 
+    // TODO: combine on underflow
+
+
+    // TODO: Update statistics
+
     return foundAtleastOnce;
+}
 
+void Table::linearHashCombine() {
+    
+    // can't combine further, M could be odd
+    if (this->M == this->initialBucketCount) {
+        return;
+    }
 
+    // handle the special case of undoing doubling of M
+    if (this->N == 0) {
+        this->M /= 2;
+        this->N = this->M;
+    }
 
+    // copy rows back
+    int to = this->N - 1;
+    int from = to + this->M;
+
+    Cursor cursor = this->getCursor(from, 0);
+    auto row = cursor.getNextInBucket();
+    while (!row.empty()) {
+        this->insertIntoHashBucket(row, to);
+    }
+
+    // delete the bucket
+    for (int i = 0; i < this->blocksInBuckets[from].size(); i++) {
+        bufferManager.deleteHashFile(this->tableName, from, i);
+    }
+
+    // fix metadata
+    this->N--;
+    this->blocksInBuckets.pop_back(); // has to be the last entry
+
+    this->blockCount = 0;
+    for (auto &b : this->blocksInBuckets) {
+        this->blockCount += b.size();
+    }
 }
