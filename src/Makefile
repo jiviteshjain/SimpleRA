@@ -2,8 +2,8 @@
 # Variables to control Makefile operation
 
 CXX = g++
-CXXFLAGS = -g -std=c++17 -I .
-DEBUGFLAGS = -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG
+CXXFLAGS = -std=c++17 -I .
+DEBUGFLAGS = -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -g
 
 SRC := $(wildcard *.cpp)
 OBJS = $(SRC:.cpp=.o)
@@ -17,6 +17,8 @@ EXEC_OBJS = $(EXEC_SRC:.cpp=.o)
 
 ifdef DEBUG
 CXXFLAGS += $(DEBUGFLAGS)
+else
+CXXFLAGS += -O3
 endif
 ifndef DEFER_WRITE
 CXXFLAGS += -D DEFER_WRITE
