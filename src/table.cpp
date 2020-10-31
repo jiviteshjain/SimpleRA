@@ -36,6 +36,7 @@ Table::Table(string tableName, vector<string> columns) {
     this->columns = columns;
     this->columnCount = columns.size();
     this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (sizeof(int) * columnCount));
+    // this->maxRowsPerBlock = 2;
     this->writeRow<string>(columns);
 }
 
@@ -84,6 +85,7 @@ bool Table::extractColumnNames(string firstLine) {
     }
     this->columnCount = this->columns.size();
     this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (sizeof(int) * this->columnCount));
+    // this->maxRowsPerBlock = 2;
     return true;
 }
 
@@ -597,10 +599,45 @@ void Table::linearHashSplit() {
 
     this->N++;
     if (this->N == this->M) {
-        this->M++;
+        this->M = this->M * 2;
         this->N = 0;
     }
 
+}
+
+void Table::cleanupBlocks(int bucket) {
+    if (this->blocksInBuckets[bucket].size() == 0) {
+        return;
+    }
+
+    int i = 0, j = this->blocksInBuckets[bucket].size() - 1;
+    while (i < j) {
+        if (this->blocksInBuckets[bucket][i] > 0) {
+            i++;
+            continue;
+        }
+        if (this->blocksInBuckets[bucket][j] == 0) {
+            j--;
+            continue;
+        }
+        // swap i and j
+        auto data = bufferManager.getHashPage(this->tableName, bucket, j).data;
+        bufferManager.deleteHashFile(this->tableName, bucket, j);
+        bufferManager.writeHashPage(this->tableName, bucket, i, data);
+        this->blocksInBuckets[bucket][i] = this->blocksInBuckets[bucket][j];
+        this->blocksInBuckets[bucket][j] = 0;
+
+        i++;
+        j--;
+    }
+
+    while (this->blocksInBuckets[bucket].size() > 0) {
+        if (this->blocksInBuckets[bucket].back() == 0) {
+            this->blocksInBuckets[bucket].pop_back();
+        } else {
+            break;
+        }
+    }
 }
 
 /**
@@ -634,12 +671,17 @@ bool Table::remove(const vector<int>& row) {
         // does not use cursor because have to modify page if row was actually found
         int bucket = this->hash(row[this->indexedColumn]);
         
+        // to avoid repeated constructor and destructor calls
+        vector<vector<int>> data;
+        vector<vector<int>>::iterator it;
+
         for (int i = 0; i < this->blocksInBuckets[bucket].size(); i++) {
             
             bool foundInPage = false;
-            auto data = bufferManager.getHashPage(this->tableName, bucket, i).data;
             
-            auto it = data.begin();
+            data = bufferManager.getHashPage(this->tableName, bucket, i).data;
+            it = data.begin();
+            
             while (it != data.end()) {
                 if (*it == row) {
                     it = data.erase(it);
@@ -649,15 +691,27 @@ bool Table::remove(const vector<int>& row) {
                 }
             }
 
+
             if (foundInPage) {
-                bufferManager.writeHashPage(this->tableName, bucket, i, data);
+                this->blocksInBuckets[bucket][i] = data.size();
+
+                if (data.size() > 0) {
+                    bufferManager.writeHashPage(this->tableName, bucket, i, data);
+                } else {
+                    bufferManager.deleteHashFile(this->tableName, bucket, i);
+                }
             }
 
             foundAtleastOnce |= foundInPage;
         }
+        // TODO: clean up pages of size 0
+        this->cleanupBlocks(bucket);
+
+        // TODO: combine only on underflow
+        this->linearHashCombine();
     }
 
-    // TODO: combine on underflow
+    
 
 
     // TODO: Update statistics
@@ -675,7 +729,7 @@ bool Table::remove(const vector<int>& row) {
 void Table::linearHashCombine() {
     
     // can't combine further, M could be odd
-    if (this->M == this->initialBucketCount) {
+    if (this->M == this->initialBucketCount && this->N == 0) {
         return;
     }
 
@@ -693,6 +747,7 @@ void Table::linearHashCombine() {
     auto row = cursor.getNextInBucket();
     while (!row.empty()) {
         this->insertIntoHashBucket(row, to);
+        row = cursor.getNextInBucket();
     }
 
     // delete the bucket

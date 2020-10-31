@@ -74,6 +74,7 @@ class Table {
     bool insertIntoHashBucket(const vector<int>& row, int bucket);
     void linearHashSplit();
     void linearHashCombine();
+    void cleanupBlocks(int bucket);
 
     /**
  * @brief Static function that takes a vector of valued and prints them out in a
