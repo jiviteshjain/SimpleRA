@@ -187,7 +187,7 @@ void executeSELECTION()
         }
         else if (parsedQuery.selectionBinaryOperator == LESS_THAN)
         {
-            for (int i = *(table->distinctValuesInColumns[firstColumnIndex].begin()), j = 0; i < parsedQuery.selectionIntLiteral, j < table->M; i++, j++)
+            for (int i = (*(table->valuesInColumns[firstColumnIndex].begin())).first, j = 0; i < parsedQuery.selectionIntLiteral, j < table->M; i++, j++)
             {
                 retrieveResult(table, resultantTable, table->hash(i));
             }
@@ -196,7 +196,7 @@ void executeSELECTION()
         }
         else if (parsedQuery.selectionBinaryOperator == LEQ)
         {
-            for (int i = *(table->distinctValuesInColumns[firstColumnIndex].begin()), j = 0; i <= parsedQuery.selectionIntLiteral, j < table->M; i++, j++)
+            for (int i = (*(table->valuesInColumns[firstColumnIndex].begin())).first, j = 0; i <= parsedQuery.selectionIntLiteral, j < table->M; i++, j++)
             {
                 retrieveResult(table, resultantTable, table->hash(i));
             }
@@ -205,7 +205,7 @@ void executeSELECTION()
         }
         else if (parsedQuery.selectionBinaryOperator == GREATER_THAN)
         {
-            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < *(table->distinctValuesInColumns[firstColumnIndex].rbegin()), j < table->M; i++, j++)
+            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < (*(table->valuesInColumns[firstColumnIndex].rbegin())).first, j < table->M; i++, j++)
             {
                 retrieveResult(table, resultantTable, table->hash(i));
             }
@@ -214,7 +214,7 @@ void executeSELECTION()
         }
         else if (parsedQuery.selectionBinaryOperator == GEQ)
         {
-            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < *(table->distinctValuesInColumns[firstColumnIndex].rbegin()), j < table->M; i++, j++)
+            for (int i = parsedQuery.selectionIntLiteral + 1, j = 0; i < (*(table->valuesInColumns[firstColumnIndex].rbegin())).first, j < table->M; i++, j++)
             {
                 retrieveResult(table, resultantTable, table->hash(i));
             }

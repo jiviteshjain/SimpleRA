@@ -22,11 +22,11 @@ class Table {
 
    public:
     //TODO: Decide if unordered or ordered. If unordered, rewrite selection loops, change line 104 of table.cpp
-    vector<set<int>> distinctValuesInColumns;
+    vector<map<int, long long>> valuesInColumns;
     string sourceFileName = "";
     string tableName = "";
     vector<string> columns;
-    vector<uint> distinctValuesPerColumnCount;
+    // vector<uint> distinctValuesPerColumnCount;
     uint columnCount = 0;
     long long int rowCount = 0;
     uint blockCount = 0;

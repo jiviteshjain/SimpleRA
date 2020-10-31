@@ -101,10 +101,11 @@ bool Table::blockify() {
     vector<int> row(this->columnCount, 0);
     vector<vector<int>> rowsInPage(this->maxRowsPerBlock, row);
     int pageCounter = 0;
-    set<int> dummy;
-    dummy.clear();
-    this->distinctValuesInColumns.assign(this->columnCount, dummy);
-    this->distinctValuesPerColumnCount.assign(this->columnCount, 0);
+    this->valuesInColumns = vector<map<int, long long>> (this->columnCount);
+    // set<int> dummy;
+    // dummy.clear();
+    // this->distinctValuesInColumns.assign(this->columnCount, dummy);
+    // this->distinctValuesPerColumnCount.assign(this->columnCount, 0);
     getline(fin, line);
     while (getline(fin, line)) {
         stringstream s(line);
@@ -147,10 +148,11 @@ bool Table::blockify() {
 void Table::updateStatistics(vector<int> row) {
     this->rowCount++;
     for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++) {
-        if (!this->distinctValuesInColumns[columnCounter].count(row[columnCounter])) {
-            this->distinctValuesInColumns[columnCounter].insert(row[columnCounter]);
-            this->distinctValuesPerColumnCount[columnCounter]++;
-        }
+        this->valuesInColumns[columnCounter][row[columnCounter]]++;
+        // if (!this->distinctValuesInColumns[columnCounter].count(row[columnCounter])) {
+        //     this->distinctValuesInColumns[columnCounter].insert(row[columnCounter]);
+        //     this->distinctValuesPerColumnCount[columnCounter]++;
+        // }
     }
 }
 
@@ -538,6 +540,7 @@ bool Table::insert(const vector<int>& row) {
 
         if (overflow) {
             // split
+            this->linearHashSplit();
         }
 
     } else if (this->indexingStrategy == BTREE) {
@@ -615,7 +618,7 @@ bool Table::remove(const vector<int>& row) {
 
     // heuristic for row not existing
     for (int i = 0; i < this->columnCount; i++) {
-        if (this->distinctValuesInColumns[i].find(row[i]) == this->distinctValuesInColumns[i].end()) {
+        if (this->valuesInColumns[i]. find(row[i]) == this->valuesInColumns[i].end() || this->valuesInColumns[i][row[i]] <= 0) {
             return false;
         }
     }
@@ -658,6 +661,13 @@ bool Table::remove(const vector<int>& row) {
 
 
     // TODO: Update statistics
+    for (int i = 0; i < this->columnCount; i++) {
+        this->valuesInColumns[i][row[i]]--;
+        if (this->valuesInColumns[i][row[i]] == 0) {
+            this->valuesInColumns[i].erase(row[i]);
+        }
+    }
+    this->rowCount--;
 
     return foundAtleastOnce;
 }
