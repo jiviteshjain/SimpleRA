@@ -658,3 +658,210 @@ bool Table::remove(const vector<int>& row) {
 
 
 }
+
+void Table::sort(int bufferSize, string columnName, float capacity, int sortingStrategy)
+{
+    int runSize = this->maxRowsPerBlock * bufferSize;
+    Cursor cursor = this->getCursor();
+    vector<int> row = cursor.getNext();
+
+    int columnIndex = this->getColumnIndex(columnName);
+    int runsCount = 0;
+    int zerothPassRunsCount;
+    unordered_map<int, int> pagesInRun;
+
+    int originalMaxRowsPerBlock = this->maxRowsPerBlock;
+    int originalBlockCount = this->blockCount;
+
+    int newMaxRowsPerBlock = floor(this->maxRowsPerBlock * capacity);
+    int newBlockCount = ceil(this->rowCount * 1.0 / newMaxRowsPerBlock * 1.0);
+
+    this->rowsPerBlockCount.resize(newBlockCount + 2 * originalBlockCount);
+
+    int blocksWritten = 0;
+    while (!row.empty())
+    {
+        vector<vector<int>> rows;
+        int rowsRead = 0;
+        while (!row.empty() && rowsRead != runSize)
+        {
+            rows.push_back(row);
+            row = cursor.getNext();
+            rowsRead++;
+        }
+
+        if (rows.size())
+            std::sort(rows.begin(), rows.end(),
+                      [&](const vector<int> &a, const vector<int> &b) {
+                          if (sortingStrategy == 0)
+                              return a[columnIndex] < b[columnIndex];
+                          else if (sortingStrategy == 1)
+                              return a[columnIndex] > b[columnIndex];
+                      });
+
+        int rowsWritten = 0;
+        while (rowsWritten < rowsRead)
+        {
+            vector<vector<int>> subvector;
+            if (rowsWritten + originalMaxRowsPerBlock <= rowsRead)
+            {
+                subvector = {rows.begin() + rowsWritten, rows.begin() + rowsWritten + originalMaxRowsPerBlock};
+                rowsWritten += originalMaxRowsPerBlock;
+            }
+            else
+            {
+                subvector = {rows.begin() + rowsWritten, rows.end()};
+                rowsWritten = rowsRead;
+            }
+
+            this->rowsPerBlockCount[newBlockCount + blocksWritten] = subvector.size();
+            bufferManager.writeTablePage(this->tableName, newBlockCount + blocksWritten++, subvector, subvector.size());
+            pagesInRun[runsCount]++;
+        }
+        runsCount++;
+        zerothPassRunsCount = runsCount;
+    }
+
+    this->blockCount = newBlockCount + this->blockCount;
+
+    int passCount = 0;
+    int totalPasses = ceil(log(runsCount) / log(bufferSize - 1));
+
+    int finalBlocksWritten = 0;
+    while (passCount < totalPasses)
+    {
+        int runsRead = 0;
+        int runsWritten = 0;
+        int blocksWritten = 0;
+        while (runsRead < runsCount)
+        {
+            unordered_map<int, int> pagesReadInRun;
+            int minSize = min(runsCount - runsRead, bufferSize - 1);
+
+            vector<vector<vector<int>>> dataFromPages(minSize);
+            vector<int> rowsReadFromPages(minSize, 0);
+
+            auto comp = [&](const pair<vector<int>, int> &a, const pair<vector<int>, int> &b) {
+                if (sortingStrategy == 0)
+                    return a.first[columnIndex] > b.first[columnIndex];
+                else if (sortingStrategy == 1)
+                    return a.first[columnIndex] < b.first[columnIndex];
+            };
+
+            priority_queue<pair<vector<int>, int>, vector<pair<vector<int>, int>>, function<bool(const pair<vector<int>, int> &a, const pair<vector<int>, int> &b)>> heap(comp);
+
+            for (int i = 0; i < minSize; i++)
+            {
+                int runPageIndex = (passCount & 1 ? newBlockCount + originalBlockCount : newBlockCount);
+
+                runPageIndex += ((runsRead + i) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + i)]++);
+                dataFromPages[i] = (bufferManager.getTablePage(this->tableName, runPageIndex).data);
+                heap.push(make_pair(dataFromPages[i][rowsReadFromPages[i]++], i));
+            }
+            vector<vector<int>> rows;
+            while (!heap.empty())
+            {
+                pair<vector<int>, int> temp = heap.top();
+                heap.pop();
+
+                rows.push_back(temp.first);
+                if (rows.size() == newMaxRowsPerBlock && passCount == totalPasses - 1)
+                {
+                    this->rowsPerBlockCount[finalBlocksWritten] = rows.size();
+                    bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, rows, rows.size());
+
+                    pagesInRun[(passCount + 1) * zerothPassRunsCount + runsWritten]++;
+                    rows.clear();
+                }
+                if (rows.size() == originalMaxRowsPerBlock && passCount != totalPasses - 1)
+                {
+                    int runPageIndex = (passCount & 1 ? newBlockCount : newBlockCount + originalBlockCount);
+                    runPageIndex += blocksWritten++;
+
+                    this->rowsPerBlockCount[runPageIndex] = rows.size();
+                    bufferManager.writeTablePage(this->tableName, runPageIndex, rows, rows.size());
+                    this->blockCount++;
+
+                    pagesInRun[(passCount + 1) * zerothPassRunsCount + runsWritten]++;
+                    rows.clear();
+                }
+
+                int runPageIndex = (passCount & 1 ? newBlockCount + originalBlockCount : newBlockCount);
+
+                runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)] - 1);
+                if (rowsReadFromPages[temp.second] != this->rowsPerBlockCount[runPageIndex])
+                    heap.push(make_pair(dataFromPages[temp.second][rowsReadFromPages[temp.second]++], temp.second));
+                else //all rows exhausted
+                {
+                    if (pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)] != pagesInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]) // all pages not exhausted
+                    {
+                        int runPageIndex = (passCount & 1 ? newBlockCount + originalBlockCount : newBlockCount);
+                        runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]++);
+                        dataFromPages[temp.second] = bufferManager.getTablePage(this->tableName, runPageIndex).data;
+                        rowsReadFromPages[temp.second] = 0;
+                        heap.push(make_pair(dataFromPages[temp.second][rowsReadFromPages[temp.second]++], temp.second));
+                    }
+                }
+            }
+            if (rows.size())
+            {
+                int runPageIndex = (passCount & 1 ? newBlockCount : newBlockCount + originalBlockCount);
+
+                runPageIndex += blocksWritten++;
+
+                if (passCount == totalPasses - 1)
+                {
+                    // bufferManager.deleteTableFile(this->tableName, finalBlocksWritten);
+                    this->rowsPerBlockCount[finalBlocksWritten] = rows.size();
+                    bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, rows, rows.size());
+                }
+                else
+                {
+                    this->rowsPerBlockCount[runPageIndex] = rows.size();
+                    bufferManager.writeTablePage(this->tableName, runPageIndex, rows, rows.size());
+                    this->blockCount++;
+                }
+
+                pagesInRun[(passCount + 1) * zerothPassRunsCount + runsWritten]++;
+                rows.clear();
+            }
+            runsRead += minSize;
+            runsWritten++;
+        }
+
+        passCount++;
+        runsCount = ceil((float)runsCount / (bufferSize - 1));
+    }
+
+    for (int i = newBlockCount; i < this->blockCount; i++)
+    {
+        if (totalPasses == 0)
+        {
+            vector<vector<int>> rows = bufferManager.getTablePage(this->tableName, i).data;
+            vector<vector<int>> subvector;
+            int rowsWritten = 0;
+
+            while (rowsWritten < rows.size())
+            {
+                if (rowsWritten + newMaxRowsPerBlock <= rows.size())
+                {
+                    subvector = {rows.begin() + rowsWritten, rows.begin() + rowsWritten + newMaxRowsPerBlock};
+                    rowsWritten += newMaxRowsPerBlock;
+                }
+                else
+                {
+                    subvector = {rows.begin() + rowsWritten, rows.end()};
+                    rowsWritten = rows.size();;
+                }
+                this->rowsPerBlockCount[finalBlocksWritten] = subvector.size();
+                bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, subvector, subvector.size());
+            }
+        }
+        bufferManager.deleteTableFile(this->tableName, i);
+    }
+
+    this->maxRowsPerBlock = newMaxRowsPerBlock;
+    this->blockCount = newBlockCount;
+
+    return;
+}
