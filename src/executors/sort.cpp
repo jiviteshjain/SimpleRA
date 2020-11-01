@@ -56,7 +56,9 @@ bool semanticParseSORT()
 void executeSORT()
 {
     Table *table = tableCatalogue.getTable(parsedQuery.sortRelationName);
+
     Table *resultantTable = new Table(parsedQuery.sortResultRelationName, table->columns);
+
     resultantTable->blockCount = table->blockCount;
     resultantTable->columnCount = table->columnCount;
     resultantTable->columns = table->columns;
@@ -64,12 +66,14 @@ void executeSORT()
     resultantTable->distinctValuesPerColumnCount = table->distinctValuesPerColumnCount;
     resultantTable->maxRowsPerBlock = table->maxRowsPerBlock;
     resultantTable->rowCount = table->rowCount;
+    resultantTable->rowsPerBlockCount.resize(table->blockCount * 3, 0);
     tableCatalogue.insertTable(resultantTable);
 
     int runSize = table->maxRowsPerBlock * parsedQuery.sortBufferSize;
 
     vector<int> row;
     Cursor cursor;
+
     if (!table->indexed)
     {
         cursor = table->getCursor();
@@ -87,6 +91,7 @@ void executeSORT()
     unordered_map<int, int> pagesInRun;
     int originalBlockCount = table->blockCount;
     int blocksWritten = 0;
+
     while (!row.empty())
     {
         vector<vector<int>> rows;
@@ -126,8 +131,10 @@ void executeSORT()
                 rowsWritten = rowsRead;
             }
 
-            bufferManager.writeTablePage(resultantTable->tableName, blocksWritten++, subvector, subvector.size());
-            resultantTable->rowsPerBlockCount.emplace_back(subvector.size());
+            resultantTable->rowsPerBlockCount[table->blockCount + blocksWritten] = subvector.size();
+            bufferManager.writeTablePage(resultantTable->tableName, table->blockCount + blocksWritten++, subvector, subvector.size());
+            // resultantTable->rowsPerBlockCount.emplace_back(subvector.size());
+
             pagesInRun[runsCount]++;
             resultantTable->blockCount++;
         }
@@ -162,7 +169,7 @@ void executeSORT()
 
             for (int i = 0; i < minSize; i++)
             {
-                int runPageIndex = (passCount & 1 ? originalBlockCount : 0);
+                int runPageIndex = (passCount & 1 ? 2 * originalBlockCount : originalBlockCount);
 
                 runPageIndex += ((runsRead + i) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + i)]++);
                 dataFromPages[i] = (bufferManager.getTablePage(resultantTable->tableName, runPageIndex).data);
@@ -177,21 +184,20 @@ void executeSORT()
                 rows.push_back(temp.first);
                 if (rows.size() == resultantTable->maxRowsPerBlock)
                 {
-                    int runPageIndex = (passCount & 1 ? 0 : originalBlockCount);
-
-                    runPageIndex = originalBlockCount;
+                    int runPageIndex = (passCount & 1 ? originalBlockCount : 2 * originalBlockCount);
 
                     runPageIndex += blocksWritten++;
                     if (passCount == totalPasses - 1)
                     {
                         for (auto row : rows)
                             resultantTable->writeRow<int>(row);
+                        resultantTable->rowsPerBlockCount[finalBlocksWritten] = rows.size();
                         bufferManager.writeTablePage(resultantTable->tableName, finalBlocksWritten++, rows, rows.size());
                     }
                     else
                     {
+                        resultantTable->rowsPerBlockCount[runPageIndex] = rows.size();
                         bufferManager.writeTablePage(resultantTable->tableName, runPageIndex, rows, rows.size());
-                        resultantTable->rowsPerBlockCount.emplace_back(rows.size());
                         resultantTable->blockCount++;
                     }
 
@@ -199,7 +205,7 @@ void executeSORT()
                     rows.clear();
                 }
 
-                int runPageIndex = (passCount & 1 ? originalBlockCount : 0);
+                int runPageIndex = (passCount & 1 ? 2 * originalBlockCount : originalBlockCount);
 
                 runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)] - 1);
                 if (rowsReadFromPages[temp.second] != resultantTable->rowsPerBlockCount[runPageIndex])
@@ -208,7 +214,7 @@ void executeSORT()
                 {
                     if (pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)] != pagesInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]) // all pages not exhausted
                     {
-                        int runPageIndex = (passCount & 1 ? originalBlockCount : 0);
+                        int runPageIndex = (passCount & 1 ? 2 * originalBlockCount : originalBlockCount);
                         runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]++);
                         dataFromPages[temp.second] = bufferManager.getTablePage(resultantTable->tableName, runPageIndex).data;
                         rowsReadFromPages[temp.second] = 0;
@@ -218,7 +224,7 @@ void executeSORT()
             }
             if (rows.size())
             {
-                int runPageIndex = (passCount & 1 ? 0 : originalBlockCount);
+                int runPageIndex = (passCount & 1 ? originalBlockCount : 2 * originalBlockCount);
 
                 runPageIndex += blocksWritten++;
 
@@ -227,13 +233,13 @@ void executeSORT()
                     for (auto row : rows)
                         resultantTable->writeRow<int>(row);
 
-                    // bufferManager.deleteTableFile(resultantTable->tableName, finalBlocksWritten);
+                    resultantTable->rowsPerBlockCount[finalBlocksWritten] = rows.size();
                     bufferManager.writeTablePage(resultantTable->tableName, finalBlocksWritten++, rows, rows.size());
                 }
                 else
                 {
+                    resultantTable->rowsPerBlockCount[runPageIndex] = rows.size();
                     bufferManager.writeTablePage(resultantTable->tableName, runPageIndex, rows, rows.size());
-                    resultantTable->rowsPerBlockCount.emplace_back(rows.size());
                     resultantTable->blockCount++;
                 }
 
@@ -248,7 +254,7 @@ void executeSORT()
         runsCount = ceil((float)runsCount / (parsedQuery.sortBufferSize - 1));
     }
 
-    for (int i = originalBlockCount; i < table->blockCount; i++)
+    for (int i = originalBlockCount; i < resultantTable->blockCount; i++)
     {
         if (totalPasses == 0)
             bufferManager.writeTablePage(resultantTable->tableName, finalBlocksWritten++, bufferManager.getTablePage(resultantTable->tableName, i).data, bufferManager.getTablePage(resultantTable->tableName, i).data.size());
@@ -256,6 +262,6 @@ void executeSORT()
     }
 
     resultantTable->blockCount = originalBlockCount;
-
+    resultantTable->rowsPerBlockCount.erase(resultantTable->rowsPerBlockCount.begin() + resultantTable->blockCount, resultantTable->rowsPerBlockCount.end());
     return;
 }
