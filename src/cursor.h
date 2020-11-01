@@ -17,6 +17,7 @@ class Cursor{
     int bucket;
     int chainCount;
     public:
+    Cursor();
     Cursor(string tableName, int pageIndex);
     Cursor(string tableName, int bucket, int chainCount);
     vector<int> getNext();    
