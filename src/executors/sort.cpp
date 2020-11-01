@@ -56,9 +56,7 @@ bool semanticParseSORT()
 void executeSORT()
 {
     Table *table = tableCatalogue.getTable(parsedQuery.sortRelationName);
-
     Table *resultantTable = new Table(parsedQuery.sortResultRelationName, table->columns);
-
     resultantTable->blockCount = table->blockCount;
     resultantTable->columnCount = table->columnCount;
     resultantTable->columns = table->columns;
@@ -133,7 +131,6 @@ void executeSORT()
 
             resultantTable->rowsPerBlockCount[table->blockCount + blocksWritten] = subvector.size();
             bufferManager.writeTablePage(resultantTable->tableName, table->blockCount + blocksWritten++, subvector, subvector.size());
-            // resultantTable->rowsPerBlockCount.emplace_back(subvector.size());
 
             pagesInRun[runsCount]++;
             resultantTable->blockCount++;
@@ -189,8 +186,6 @@ void executeSORT()
                     runPageIndex += blocksWritten++;
                     if (passCount == totalPasses - 1)
                     {
-                        for (auto row : rows)
-                            resultantTable->writeRow<int>(row);
                         resultantTable->rowsPerBlockCount[finalBlocksWritten] = rows.size();
                         bufferManager.writeTablePage(resultantTable->tableName, finalBlocksWritten++, rows, rows.size());
                     }
@@ -230,9 +225,6 @@ void executeSORT()
 
                 if (passCount == totalPasses - 1)
                 {
-                    for (auto row : rows)
-                        resultantTable->writeRow<int>(row);
-
                     resultantTable->rowsPerBlockCount[finalBlocksWritten] = rows.size();
                     bufferManager.writeTablePage(resultantTable->tableName, finalBlocksWritten++, rows, rows.size());
                 }
