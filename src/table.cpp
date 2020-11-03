@@ -284,7 +284,7 @@ void Table::getNextPage(Cursor *cursor, int bucket, int chainCount) {
     if (cursor->chainCount < this->blocksInBuckets[cursor->bucket].size() - 1) {
         cursor->nextPage(cursor->bucket, cursor->chainCount + 1);
     }
-    else if (cursor->bucket < M - 1) {
+    else if (cursor->bucket < this->blocksInBuckets.size() - 1) {
         cursor->nextPage(cursor->bucket + 1, 0);
     }
 }
