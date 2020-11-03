@@ -534,7 +534,22 @@ bool Table::insert(const vector<int>& row) {
     }
 
     if (this->indexingStrategy == NOTHING) {
-        ; // TODO: insert into a normal table
+        if (this->rowsPerBlockCount[this->blockCount - 1] != this->maxRowsPerBlock) {
+            vector<vector<int>> rows = bufferManager.getTablePage(this->tableName, this->blockCount - 1).data;
+            rows.resize(this->rowsPerBlockCount[this->blockCount - 1]);
+            rows.push_back(row);
+            bufferManager.deleteTableFile(this->tableName, this->blockCount - 1);
+            bufferManager.writeTablePage(this->tableName, this->blockCount - 1, rows, rows.size());
+            this->rowsPerBlockCount[this->blockCount - 1] = rows.size();
+        }
+        else {
+            vector<vector<int>> rows;
+            rows.push_back(row);
+            bufferManager.writeTablePage(this->tableName, this->blockCount, rows, rows.size());
+            this->blockCount++;
+            this->rowsPerBlockCount.emplace_back(rows.size());
+        }
+
     } else if (this->indexingStrategy == HASH) {
         int bucket = this->hash(row[this->indexedColumn]);
         // because row is large enough, this is always in bounds
