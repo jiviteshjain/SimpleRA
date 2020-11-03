@@ -641,6 +641,57 @@ void Table::cleanupBlocks(int bucket) {
 }
 
 /**
+ * @brief Clears the index, if it exists, on the table
+ * 
+ * @param 
+ * 
+ * @return 
+ */
+void Table::clearIndex()
+{
+    if (!this->indexed)
+        return;
+
+    if (this->indexingStrategy == HASH)
+    {
+        string oldSourceFileName = this->sourceFileName;
+        this->sourceFileName = "../data/temp/" + tableName + ".csv";
+        this->writeRow<string>(this->columns);
+
+        Cursor cursor = this->getCursor(0, 0);
+        vector<int> row = cursor.getNextInAllBuckets();
+        while (!row.empty())
+        {
+            this->writeRow<int>(row);
+            row = cursor.getNextInAllBuckets();
+        }
+
+        for (int bucket = 0; bucket < this->blocksInBuckets.size(); bucket++)
+            for (int chainCount = 0; chainCount < this->blocksInBuckets[bucket].size(); chainCount++)
+                bufferManager.deleteHashFile(this->tableName, bucket, chainCount);
+
+        this->M = 0;
+        this->N = 0;
+        this->blockCount = 0;
+        this->blocksInBuckets.clear();
+        this->initialBucketCount = 0;
+        this->rowsPerBlockCount.clear();
+        this->rowCount = 0;
+        this->valuesInColumns.clear();
+
+        this->blockify();
+        
+        std::remove(this->sourceFileName.c_str());
+        this->sourceFileName = oldSourceFileName;   
+    }
+
+    this->indexed = false;
+    this->indexingStrategy = NOTHING;
+
+    return;
+}
+
+/**
  * @brief Deletes a row, if exists, from the table
  * 
  * @param row

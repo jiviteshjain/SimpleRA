@@ -63,7 +63,7 @@ void executeINDEX() {
          << "Strategy = " << parsedQuery.indexingStrategy << endl;
     
     if (parsedQuery.indexingStrategy == NOTHING) {
-        ; // TODO: clear index
+        table->clearIndex();
     } else if (parsedQuery.indexingStrategy == HASH) {
         table->linearHash(parsedQuery.indexColumnName, stoi(tokenizedQuery[8]));
     } else if (parsedQuery.indexingStrategy == BTREE) {
