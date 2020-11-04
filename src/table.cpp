@@ -542,22 +542,30 @@ bool Table::insert(const vector<int>& row) {
     }
 
     if (this->indexingStrategy == NOTHING) {
-        if (this->rowsPerBlockCount[this->blockCount - 1] != this->maxRowsPerBlock) {
-            vector<vector<int>> rows = bufferManager.getTablePage(this->tableName, this->blockCount - 1).data;
-            rows.resize(this->rowsPerBlockCount[this->blockCount - 1]);
-            rows.push_back(row);
-            bufferManager.deleteTableFile(this->tableName, this->blockCount - 1);
-            bufferManager.writeTablePage(this->tableName, this->blockCount - 1, rows, rows.size());
-            this->rowsPerBlockCount[this->blockCount - 1] = rows.size();
+        vector<vector<int>> rows;
+        int blockIndex;
+        for (blockIndex = 0; blockIndex < this->blockCount; blockIndex++)
+        {
+            if (this->rowsPerBlockCount[blockIndex] != this->maxRowsPerBlock)
+            {
+                rows = bufferManager.getTablePage(this->tableName, blockIndex).data;
+                rows.resize(this->rowsPerBlockCount[blockIndex]);
+                rows.push_back(row);
+                bufferManager.deleteTableFile(this->tableName, blockIndex);
+                bufferManager.writeTablePage(this->tableName, blockIndex, rows, rows.size());
+                this->rowsPerBlockCount[blockIndex] = rows.size();
+                break;
+            }
         }
-        else {
-            vector<vector<int>> rows;
+
+        if (blockIndex == this->blockCount)
+        {
             rows.push_back(row);
             bufferManager.writeTablePage(this->tableName, this->blockCount, rows, rows.size());
             this->blockCount++;
             this->rowsPerBlockCount.emplace_back(rows.size());
         }
-
+        
     } else if (this->indexingStrategy == HASH) {
         int bucket = this->hash(row[this->indexedColumn]);
         // because row is large enough, this is always in bounds
