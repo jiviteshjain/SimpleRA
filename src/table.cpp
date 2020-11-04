@@ -747,8 +747,91 @@ bool Table::remove(const vector<int>& row) {
     long long foundCount = 0;
     
     if (this->indexingStrategy == NOTHING) {
-        ;
-        // TODO
+        vector<vector<int>> data;
+        vector<vector<int>>::iterator it;
+        int pageIndex;
+
+        for (int pageIndex = 0; pageIndex < this->blockCount; pageIndex++)
+        {
+            long long foundInPage = 0;
+
+            data = bufferManager.getTablePage(this->tableName, pageIndex).data;
+            data.resize(this->rowsPerBlockCount[pageIndex]);
+
+            it = data.begin();
+
+            while (it != data.end())
+            {
+                if (*it == row)
+                {
+                    it = data.erase(it);
+                    foundInPage++;
+                }
+                else
+                    it++;
+            }
+
+            if (foundInPage > 0)
+            {
+                this->rowsPerBlockCount[pageIndex] = data.size();
+
+                if (data.size() > 0)
+                {
+                    bufferManager.writeTablePage(this->tableName, pageIndex, data, data.size());
+                    //Find other page whose capacity matches, merge
+                    for (int i = 0; i < this->blockCount; i++)
+                    {
+                        if (this->rowsPerBlockCount[i] + this->rowsPerBlockCount[pageIndex] <= this->maxRowsPerBlock && i != pageIndex)
+                        {
+                            vector<vector<int>> rows;
+                            rows = bufferManager.getTablePage(this->tableName, i).data;
+                            rows.resize(this->rowsPerBlockCount[i]);
+                            rows.insert(std::end(rows), std::begin(data), std::end(data));
+
+                            bufferManager.deleteTableFile(this->tableName, pageIndex);
+                            this->rowsPerBlockCount[pageIndex] = 0;
+                            bufferManager.deleteTableFile(this->tableName, i);
+                            this->rowsPerBlockCount[i] = 0;
+
+                            bufferManager.writeTablePage(this->tableName, i, rows, rows.size());
+                            this->rowsPerBlockCount[i] = rows.size();
+                            if (pageIndex != this->blockCount - 1)
+                            {
+                                vector<vector<int>> finalBlockRows = bufferManager.getTablePage(this->tableName, this->blockCount - 1).data;
+                                bufferManager.deleteTableFile(this->tableName, this->blockCount - 1);
+                                finalBlockRows.resize(this->rowsPerBlockCount[this->blockCount - 1]);
+                                bufferManager.writeTablePage(this->tableName, pageIndex, finalBlockRows, finalBlockRows.size());
+                                this->rowsPerBlockCount[pageIndex] = finalBlockRows.size();
+                            }
+                            // this->rowsPerBlockCount.resize(this->blockCount - 1);
+                            this->rowsPerBlockCount[this->blockCount - 1] = 0;
+                            this->blockCount--;
+
+                            pageIndex = 0; //to restart the loop after a merge
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    bufferManager.deleteTableFile(this->tableName, pageIndex);
+                    if (pageIndex != this->blockCount - 1)
+                    {
+                        vector<vector<int>> finalBlockRows = bufferManager.getTablePage(this->tableName, this->blockCount - 1).data;
+                        bufferManager.deleteTableFile(this->tableName, this->blockCount - 1);
+                        finalBlockRows.resize(this->rowsPerBlockCount[this->blockCount - 1]);
+                        bufferManager.writeTablePage(this->tableName, pageIndex, finalBlockRows, finalBlockRows.size());
+                        this->rowsPerBlockCount[pageIndex] = finalBlockRows.size();
+                    }
+                    // this->rowsPerBlockCount.resize(this->blockCount - 1);
+                    this->rowsPerBlockCount[this->blockCount - 1] = 0;
+                    this->blockCount--;
+                }
+
+                foundCount = foundCount + foundInPage;
+            }
+        }
+    
     } else if (this->indexingStrategy == HASH) {
 
         // check corresponding bucket
