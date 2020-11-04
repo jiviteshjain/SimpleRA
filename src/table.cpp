@@ -304,11 +304,19 @@ void Table::makePermanent() {
 
     //print headings
     this->writeRow(this->columns, fout);
+    Cursor cursor;
 
-    Cursor cursor(this->tableName, 0);
+    if (!this->indexed)
+        cursor = this->getCursor();
+    else if (this->indexingStrategy == HASH)
+        cursor = this->getCursor(0, 0);
+        
     vector<int> row;
     for (int rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
-        row = cursor.getNext();
+        if (!this->indexed)
+            row = cursor.getNext();
+        else if (this->indexingStrategy == HASH)
+            row = cursor.getNextInAllBuckets();
         this->writeRow(row, fout);
     }
     fout.close();
