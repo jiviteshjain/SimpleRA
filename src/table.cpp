@@ -36,7 +36,7 @@ Table::Table(string tableName, vector<string> columns) {
     this->columns = columns;
     this->columnCount = columns.size();
     this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (sizeof(int) * columnCount));
-    // this->maxRowsPerBlock = 2;
+    // this->maxRowsPerBlock = 2; // DEBUG
     this->writeRow<string>(columns);
 }
 
@@ -85,7 +85,7 @@ bool Table::extractColumnNames(string firstLine) {
     }
     this->columnCount = this->columns.size();
     this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (sizeof(int) * this->columnCount));
-    // this->maxRowsPerBlock = 2;
+    // this->maxRowsPerBlock = 2; // DEBUG
     return true;
 }
 
@@ -561,10 +561,12 @@ bool Table::insert(const vector<int>& row) {
     } else if (this->indexingStrategy == HASH) {
         int bucket = this->hash(row[this->indexedColumn]);
         // because row is large enough, this is always in bounds
-        bool overflow = this->insertIntoHashBucket(row, bucket);
+        this->insertIntoHashBucket(row, bucket);
 
-        if (overflow) {
-            // split
+        // split
+        // rowCount is updated later, so +1
+        // we want to compare it with the original blockCount
+        if ((this->rowCount + 1) / this->blockCount > HASH_DENSITY_MAX) {
             this->linearHashSplit();
         }
 
@@ -734,7 +736,7 @@ bool Table::remove(const vector<int>& row) {
         }
     }
 
-    bool foundAtleastOnce = false;
+    long long foundCount = 0;
     
     if (this->indexingStrategy == NOTHING) {
         ;
@@ -751,7 +753,7 @@ bool Table::remove(const vector<int>& row) {
 
         for (int i = 0; i < this->blocksInBuckets[bucket].size(); i++) {
             
-            bool foundInPage = false;
+            long long foundInPage = 0;
             
             data = bufferManager.getHashPage(this->tableName, bucket, i).data;
             it = data.begin();
@@ -759,14 +761,14 @@ bool Table::remove(const vector<int>& row) {
             while (it != data.end()) {
                 if (*it == row) {
                     it = data.erase(it);
-                    foundInPage = true;
+                    foundInPage++;
                 } else {
                     it++;
                 }
             }
 
 
-            if (foundInPage) {
+            if (foundInPage > 0) {
                 this->blocksInBuckets[bucket][i] = data.size();
 
                 if (data.size() > 0) {
@@ -774,30 +776,42 @@ bool Table::remove(const vector<int>& row) {
                 } else {
                     bufferManager.deleteHashFile(this->tableName, bucket, i);
                 }
+
+                foundCount = foundCount + foundInPage;
             }
 
-            foundAtleastOnce |= foundInPage;
         }
-        // TODO: clean up pages of size 0
-        this->cleanupBlocks(bucket);
 
-        // TODO: combine only on underflow
-        this->linearHashCombine();
+        if (foundCount > 0) {
+            // clean up pages of size 0
+            this->cleanupBlocks(bucket);
+
+            // combine only on underflow
+            // rowCount is updated later, so -foundCount
+            // we want to compare it with the original blockCount
+            if ((this->rowCount - foundCount) / this->blockCount < HASH_DENSITY_MIN) {
+                this->linearHashCombine();
+            }
+        }
     }
 
     
+    if (foundCount == 0) {
+        return false;
+    }
 
+    // GAURANTEED DELETE
 
-    // TODO: Update statistics
+    // Update statistics
     for (int i = 0; i < this->columnCount; i++) {
-        this->valuesInColumns[i][row[i]]--;
-        if (this->valuesInColumns[i][row[i]] == 0) {
+        this->valuesInColumns[i][row[i]] -= foundCount;
+        if (this->valuesInColumns[i][row[i]] <= 0) {
             this->valuesInColumns[i].erase(row[i]);
         }
     }
-    this->rowCount--;
+    this->rowCount = this->rowCount - foundCount;
 
-    return foundAtleastOnce;
+    return true;
 }
 
 void Table::linearHashCombine() {

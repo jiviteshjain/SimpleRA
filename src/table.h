@@ -9,6 +9,9 @@ enum IndexingStrategy {
     NOTHING
 };
 
+#define HASH_DENSITY_MAX 0.9
+#define HASH_DENSITY_MIN 0.6
+
 /**
  * @brief The Table class holds all information related to a loaded table. It
  * also implements methods that interact with the parsers, executors, cursors
