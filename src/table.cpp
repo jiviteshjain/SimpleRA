@@ -278,17 +278,26 @@ void Table::getNextPage(Cursor *cursor, int chainCount) {
  * @param cursor 
  * @return void 
  */
-void Table::getNextPage(Cursor *cursor, int bucket, int chainCount) {
+void Table::getNextPage(Cursor *cursor, int bucket, int chainCount)
+{
     logger.log("Table::getNextPage");
 
-    if (cursor->chainCount < this->blocksInBuckets[cursor->bucket].size() - 1) {
+    if (cursor->chainCount < this->blocksInBuckets[cursor->bucket].size() - 1)
         cursor->nextPage(cursor->bucket, cursor->chainCount + 1);
-    }
-    else if (cursor->bucket < this->blocksInBuckets.size() - 1) {
-        cursor->nextPage(cursor->bucket + 1, 0);
+    else
+    {
+        int bucket = -1;
+        for (int i = cursor->bucket + 1; i < this->blocksInBuckets.size(); i++)
+            if (this->blocksInBuckets[i].size())
+            {
+                bucket = i;
+                break;
+            }
+        
+        if (bucket != -1)
+            cursor->nextPage(bucket, 0);
     }
 }
-
 
 /**
  * @brief called when EXPORT command is invoked to move source file to "data"

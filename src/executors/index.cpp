@@ -59,8 +59,8 @@ void executeINDEX() {
     
     Table* table = tableCatalogue.getTable(parsedQuery.indexRelationName);
 
-    cout << "Table = " << table->tableName << endl
-         << "Strategy = " << parsedQuery.indexingStrategy << endl;
+    // cout << "Table = " << table->tableName << endl
+    //      << "Strategy = " << parsedQuery.indexingStrategy << endl;
     
     if (parsedQuery.indexingStrategy == NOTHING) {
         table->clearIndex();

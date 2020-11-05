@@ -12,12 +12,23 @@ Cursor::Cursor(string tableName, int pageIndex) {
     this->pageIndex = pageIndex;
 }
 
-Cursor::Cursor(string tableName, int bucket, int chainCount) {
+Cursor::Cursor(string tableName, int assignedBucket, int chainCount) {
     logger.log("Cursor::Cursor");
-    this->page = bufferManager.getHashPage(tableName, bucket, chainCount);
+    
+    Table *table = tableCatalogue.getTable(tableName);
+    this->bucket = -1;
+    for (int i = assignedBucket; i < table->blocksInBuckets.size(); i++)
+        if (table->blocksInBuckets[i].size())
+        {
+            this->bucket = i;
+            break;
+        }
+
+    if (this->bucket != -1)
+        this->page = bufferManager.getHashPage(tableName, this->bucket, chainCount);
     this->pagePointer = 0;
     this->tableName = tableName;
-    this->bucket = bucket;
+    this->assignedBucket = assignedBucket;
     this->chainCount = chainCount;
 }
 
@@ -51,7 +62,10 @@ vector<int> Cursor::getNext() {
  */
 vector<int> Cursor::getNextInBucket() {
     logger.log("Cursor::getNextInBucket");
-    vector<int> result = this->page.getRow(this->pagePointer);
+    vector<int> result;
+    if (this->bucket != assignedBucket)
+        return result;
+    result = this->page.getRow(this->pagePointer);
     this->pagePointer++;
     if (result.empty()) {
         tableCatalogue.getTable(this->tableName)->getNextPage(this, this->chainCount);
@@ -72,7 +86,10 @@ vector<int> Cursor::getNextInBucket() {
  */
 vector<int> Cursor::getNextInAllBuckets() {
     logger.log("Cursor::getNextInAllBuckets");
-    vector<int> result = this->page.getRow(this->pagePointer);
+    vector<int> result;
+    if (this->bucket == -1)
+        return result;
+    result = this->page.getRow(this->pagePointer);
     this->pagePointer++;
     if (result.empty()) {
         tableCatalogue.getTable(this->tableName)->getNextPage(this, this->bucket, this->chainCount);

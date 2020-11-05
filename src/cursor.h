@@ -14,6 +14,7 @@ class Cursor{
     int pageIndex;
     string tableName;
     int pagePointer;
+    int assignedBucket;
     int bucket;
     int chainCount;
     public:
