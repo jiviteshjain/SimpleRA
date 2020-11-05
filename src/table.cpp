@@ -250,7 +250,7 @@ void Table::print() {
 void Table::getNextPage(Cursor *cursor) {
     logger.log("Table::getNextPage");
 
-    if (cursor->pageIndex < this->blockCount - 1) {
+    if (cursor->pageIndex < (int)this->blockCount - 1) {
         cursor->nextPage(cursor->pageIndex + 1);
     }
 }
