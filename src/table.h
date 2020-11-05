@@ -60,6 +60,7 @@ class Table {
     int getColumnIndex(string columnName);
     string getIndexedColumn();
     void unload();
+    void sort(int bufferSize, string columnName, float capacity, int sortingStrategy);
     bool insert(const vector<int>& row);
     bool remove(const vector<int>& row);
     // FOR LINEAR HASHING
