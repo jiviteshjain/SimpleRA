@@ -5,6 +5,7 @@
 
 void executeCommand();
 
+void executeBULKINSERT();
 void executeCLEAR();
 void executeCROSS();
 void executeDELETE();

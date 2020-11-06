@@ -14,6 +14,7 @@ enum DataType
 
 enum QueryType
 {
+    BULKINSERT,
     CLEAR,
     CROSS,
     DELETE,
@@ -65,6 +66,9 @@ class ParsedQuery
 
 public:
     QueryType queryType = UNDETERMINED;
+
+    string bulkInsertFileName = "";
+    string bulkInsertRelationName = "";
 
     string clearRelationName = "";
 
@@ -130,6 +134,7 @@ public:
 };
 
 bool syntacticParse();
+bool syntacticParseBULKINSERT();
 bool syntacticParseCLEAR();
 bool syntacticParseCROSS();
 bool syntacticParseDELETE();

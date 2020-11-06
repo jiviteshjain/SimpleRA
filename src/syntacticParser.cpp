@@ -10,7 +10,8 @@ bool syntacticParse()
         cout << "SYNTAX ERROR" << endl;
         return false;
     }
-
+    if (possibleQueryType == "BULK_INSERT")
+        return syntacticParseBULKINSERT();
     if (possibleQueryType == "CLEAR")
         return syntacticParseCLEAR();
     else if (possibleQueryType == "DELETE")
@@ -74,6 +75,9 @@ void ParsedQuery::clear()
     logger.log("ParseQuery::clear");
     this->queryType = UNDETERMINED;
 
+    string bulkInsertFileName = "";
+    string bulkInsertRelationName = "";
+    
     this->clearRelationName = "";
 
     this->crossResultRelationName = "";
