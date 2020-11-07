@@ -51,6 +51,7 @@ void executePROJECTION()
 {
     logger.log("executePROJECTION");
     Table* resultantTable = new Table(parsedQuery.projectionResultRelationName, parsedQuery.projectionColumnList);
+    resultantTable->writeRow<string>(parsedQuery.projectionColumnList);
     Table *table = tableCatalogue.getTable(parsedQuery.projectionRelationName);
     Cursor cursor = table->getCursor();
     vector<int> columnIndices;
