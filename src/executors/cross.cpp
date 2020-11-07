@@ -41,32 +41,32 @@ void executeCROSS()
 {
     logger.log("executeCROSS");
 
-    Table table1 = *(tableCatalogue.getTable(parsedQuery.crossFirstRelationName));
-    Table table2 = *(tableCatalogue.getTable(parsedQuery.crossSecondRelationName));
+    Table *table1 = tableCatalogue.getTable(parsedQuery.crossFirstRelationName);
+    Table *table2 = tableCatalogue.getTable(parsedQuery.crossSecondRelationName);
 
     vector<string> columns;
 
     //If both tables are the same i.e. CROSS a a, then names are indexed as a1 and a2
-    if(table1.tableName == table2.tableName){
+    if(table1->tableName == table2->tableName){
         parsedQuery.crossFirstRelationName += "1";
         parsedQuery.crossSecondRelationName += "2";
     }
 
     //Creating list of column names
-    for (int columnCounter = 0; columnCounter < table1.columnCount; columnCounter++)
+    for (int columnCounter = 0; columnCounter < table1->columnCount; columnCounter++)
     {
-        string columnName = table1.columns[columnCounter];
-        if (table2.isColumn(columnName))
+        string columnName = table1->columns[columnCounter];
+        if (table2->isColumn(columnName))
         {
             columnName = parsedQuery.crossFirstRelationName + "_" + columnName;
         }
         columns.emplace_back(columnName);
     }
 
-    for (int columnCounter = 0; columnCounter < table2.columnCount; columnCounter++)
+    for (int columnCounter = 0; columnCounter < table2->columnCount; columnCounter++)
     {
-        string columnName = table2.columns[columnCounter];
-        if (table1.isColumn(columnName))
+        string columnName = table2->columns[columnCounter];
+        if (table1->isColumn(columnName))
         {
             columnName = parsedQuery.crossSecondRelationName + "_" + columnName;
         }
@@ -75,28 +75,54 @@ void executeCROSS()
 
     Table *resultantTable = new Table(parsedQuery.crossResultRelationName, columns);
     resultantTable->writeRow<string>(columns);
+    
+    Cursor cursor1;
+    vector<int> row1;
 
-    Cursor cursor1 = table1.getCursor();
-    Cursor cursor2 = table2.getCursor();
+    if (!table1->indexed)
+    {
+        cursor1 = table1->getCursor();
+        row1 = cursor1.getNext();
+    }
+    else if (table1->indexingStrategy == HASH)
+    {
+        cursor1 = table1->getCursor(0, 0);
+        row1 = cursor1.getNextInAllBuckets();
+    }
 
-    vector<int> row1 = cursor1.getNext();
     vector<int> row2;
     vector<int> resultantRow;
     resultantRow.reserve(resultantTable->columnCount);
 
     while (!row1.empty())
     {
+        Cursor cursor2;
+        if (!table2->indexed)
+        {
+            cursor2 = table2->getCursor();
+            row2 = cursor2.getNext();
+        }
+        else if (table2->indexingStrategy == HASH)
+        {
+            cursor2 = table2->getCursor(0, 0);
+            row2 = cursor2.getNextInAllBuckets();
+        }
 
-        cursor2 = table2.getCursor();
-        row2 = cursor2.getNext();
         while (!row2.empty())
         {
             resultantRow = row1;
             resultantRow.insert(resultantRow.end(), row2.begin(), row2.end());
             resultantTable->writeRow<int>(resultantRow);
-            row2 = cursor2.getNext();
+            if (!table2->indexed)
+                row2 = cursor2.getNext();
+            else if (table2->indexingStrategy == HASH)
+                row2 = cursor2.getNextInAllBuckets();
         }
-        row1 = cursor1.getNext();
+
+        if (!table1->indexed)
+            row1 = cursor1.getNext();
+        else if (table1->indexingStrategy == HASH)
+            row1 = cursor1.getNextInAllBuckets();
     }
     resultantTable->blockify();
     tableCatalogue.insertTable(resultantTable);

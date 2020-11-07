@@ -53,24 +53,39 @@ void executePROJECTION()
     Table* resultantTable = new Table(parsedQuery.projectionResultRelationName, parsedQuery.projectionColumnList);
     resultantTable->writeRow<string>(parsedQuery.projectionColumnList);
     Table *table = tableCatalogue.getTable(parsedQuery.projectionRelationName);
-    Cursor cursor = table->getCursor();
     vector<int> columnIndices;
     for (int columnCounter = 0; columnCounter < parsedQuery.projectionColumnList.size(); columnCounter++)
     {
         columnIndices.emplace_back(table->getColumnIndex(parsedQuery.projectionColumnList[columnCounter]));
     }
-    vector<int> row = cursor.getNext();
+    
+    vector<int> row;
+    Cursor cursor;
+
+    if (!table->indexed)
+    {
+        cursor = table->getCursor();
+        row = cursor.getNext();
+    }
+    else if (table->indexingStrategy == HASH)
+    {
+        cursor = table->getCursor(0, 0);
+        row = cursor.getNextInAllBuckets();
+    }
+    
     vector<int> resultantRow(columnIndices.size(), 0);
 
     while (!row.empty())
     {
-
         for (int columnCounter = 0; columnCounter < columnIndices.size(); columnCounter++)
         {
             resultantRow[columnCounter] = row[columnIndices[columnCounter]];
         }
         resultantTable->writeRow<int>(resultantRow);
-        row = cursor.getNext();
+        if (!table->indexed)
+            row = cursor.getNext();
+        else if (table->indexingStrategy == HASH)
+            row = cursor.getNextInAllBuckets();
     }
     resultantTable->blockify();
     tableCatalogue.insertTable(resultantTable);
