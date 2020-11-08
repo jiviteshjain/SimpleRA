@@ -9,6 +9,7 @@ void executeCommand(){
         case DELETE: executeDELETE(); break;
         case DISTINCT: executeDISTINCT(); break;
         case EXPORT: executeEXPORT(); break;
+        case GROUPBY: executeGROUPBY(); break;
         case INSERT: executeINSERT(); break;
         case INDEX: executeINDEX(); break;
         case JOIN: executeJOIN(); break;

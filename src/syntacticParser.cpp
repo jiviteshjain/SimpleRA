@@ -45,7 +45,9 @@ bool syntacticParse()
             return false;
         }
         possibleQueryType = tokenizedQuery[2];
-        if (possibleQueryType == "PROJECT")
+        if (possibleQueryType == "GROUP")
+        return syntacticParseGROUPBY();
+        else if (possibleQueryType == "PROJECT")
             return syntacticParsePROJECTION();
         else if (possibleQueryType == "SELECT")
             return syntacticParseSELECTION();
@@ -91,6 +93,12 @@ void ParsedQuery::clear()
     this->distinctRelationName = "";
 
     this->exportRelationOrMatrixName = "";
+
+    this->groupByGroupingAttributeName = "";
+    this->groupByResultRelationName = "";
+    this->groupByRelationName = "";
+    this->groupByOperatorName = "";
+    this->groupByAttributeName = "";
 
     this->indexingStrategy = NOTHING;
     this->indexColumnName = "";

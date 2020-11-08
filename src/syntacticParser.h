@@ -20,6 +20,7 @@ enum QueryType
     DELETE,
     DISTINCT,
     EXPORT,
+    GROUPBY,
     INSERT,
     INDEX,
     JOIN,
@@ -84,6 +85,12 @@ public:
 
     string exportRelationOrMatrixName = "";
 
+    string groupByGroupingAttributeName = "";
+    string groupByResultRelationName = "";
+    string groupByRelationName = "";
+    string groupByOperatorName = "";
+    string groupByAttributeName = "";
+
     IndexingStrategy indexingStrategy = NOTHING;
     string indexColumnName = "";
     string indexRelationName = "";
@@ -140,6 +147,7 @@ bool syntacticParseCROSS();
 bool syntacticParseDELETE();
 bool syntacticParseDISTINCT();
 bool syntacticParseEXPORT();
+bool syntacticParseGROUPBY();
 bool syntacticParseINDEX();
 bool syntacticParseINSERT();
 bool syntacticParseJOIN();

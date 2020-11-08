@@ -11,6 +11,7 @@ void executeCROSS();
 void executeDELETE();
 void executeDISTINCT();
 void executeEXPORT();
+void executeGROUPBY();
 void executeINSERT();
 void executeINDEX();
 void executeJOIN();

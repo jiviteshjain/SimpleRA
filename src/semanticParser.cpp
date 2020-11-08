@@ -9,6 +9,7 @@ bool semanticParse(){
         case DELETE: return semanticParseDELETE();
         case DISTINCT: return semanticParseDISTINCT();
         case EXPORT: return semanticParseEXPORT();
+        case GROUPBY: return semanticParseGROUPBY();
         case INDEX: return semanticParseINDEX();
         case INSERT: return semanticParseINSERT();
         case JOIN: return semanticParseJOIN();
