@@ -150,7 +150,6 @@ void executeSELECTION()
     logger.log("executeSELECTION");
     Table *table = tableCatalogue.getTable(parsedQuery.selectionRelationName);
     Table *resultantTable = new Table(parsedQuery.selectionResultRelationName, table->columns);
-    resultantTable->valuesInColumns = vector<map<int, long long>> (resultantTable->columnCount);
     int firstColumnIndex = table->getColumnIndex(parsedQuery.selectionFirstColumnName);
     if (!table->indexed)
     {
