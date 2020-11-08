@@ -122,6 +122,7 @@ void retrieveResult(Table *table, Table *resultantTable, int bucket)
             resultantTable->rowsPerBlockCount.emplace_back(rows.size());
             bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
             resultantTable->blockCount++;
+            rows.clear();
         }
         row = cursor.getNextInBucket();
     }
@@ -131,6 +132,7 @@ void retrieveResult(Table *table, Table *resultantTable, int bucket)
         resultantTable->rowsPerBlockCount.emplace_back(rows.size());
         bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
         resultantTable->blockCount++;
+        rows.clear();
     }
 }
 
@@ -177,6 +179,7 @@ void executeSELECTION()
                 resultantTable->rowsPerBlockCount.emplace_back(rows.size());
                 bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
                 resultantTable->blockCount++;
+                rows.clear();
             }
 
             row = cursor.getNext();
@@ -187,6 +190,7 @@ void executeSELECTION()
             resultantTable->rowsPerBlockCount.emplace_back(rows.size());
             bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
             resultantTable->blockCount++;
+            rows.clear();
         }
         saveResult(resultantTable);
         return;
@@ -219,6 +223,7 @@ void executeSELECTION()
                     resultantTable->rowsPerBlockCount.emplace_back(rows.size());
                     bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
                     resultantTable->blockCount++;
+                    rows.clear();
                 }
                 row = cursor.getNextInAllBuckets();
             }
@@ -228,6 +233,7 @@ void executeSELECTION()
                 resultantTable->rowsPerBlockCount.emplace_back(rows.size());
                 bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
                 resultantTable->blockCount++;
+                rows.clear();
             }
             saveResult(resultantTable);
         }
