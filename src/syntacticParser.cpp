@@ -77,8 +77,9 @@ void ParsedQuery::clear()
     logger.log("ParseQuery::clear");
     this->queryType = UNDETERMINED;
 
-    string bulkInsertFileName = "";
-    string bulkInsertRelationName = "";
+    
+    this->bulkInsertFileName = "";
+    this->bulkInsertRelationName = "";
     
     this->clearRelationName = "";
 
