@@ -5,6 +5,7 @@
 
 void executeCommand();
 
+void executeALTERTABLE();
 void executeBULKINSERT();
 void executeCLEAR();
 void executeCROSS();

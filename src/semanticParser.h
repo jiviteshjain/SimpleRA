@@ -5,6 +5,7 @@
 
 bool semanticParse();
 
+bool semanticParseALTERTABLE();
 bool semanticParseBULKINSERT();
 bool semanticParseCLEAR();
 bool semanticParseCROSS();

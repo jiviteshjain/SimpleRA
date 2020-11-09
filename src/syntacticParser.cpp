@@ -10,7 +10,9 @@ bool syntacticParse()
         cout << "SYNTAX ERROR" << endl;
         return false;
     }
-    if (possibleQueryType == "BULK_INSERT")
+    if (possibleQueryType == "ALTER" && tokenizedQuery[1] == "TABLE")
+        return syntacticParseALTERTABLE();
+    else if (possibleQueryType == "BULK_INSERT")
         return syntacticParseBULKINSERT();
     if (possibleQueryType == "CLEAR")
         return syntacticParseCLEAR();
@@ -76,7 +78,10 @@ void ParsedQuery::clear()
 {
     logger.log("ParseQuery::clear");
     this->queryType = UNDETERMINED;
-
+    
+    this->alterTableRelationName = "";
+    this->alterTableOperationName = "";
+    this->alterTableColumnName = "";
     
     this->bulkInsertFileName = "";
     this->bulkInsertRelationName = "";

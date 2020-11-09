@@ -3,6 +3,7 @@
 bool semanticParse(){
     logger.log("semanticParse");
     switch(parsedQuery.queryType){
+        case ALTERTABLE: return semanticParseALTERTABLE();
         case BULKINSERT: return semanticParseBULKINSERT();
         case CLEAR: return semanticParseCLEAR();
         case CROSS: return semanticParseCROSS();
