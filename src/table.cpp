@@ -36,7 +36,9 @@ Table::Table(string tableName, vector<string> columns) {
     this->columns = columns;
     this->columnCount = columns.size();
     this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (sizeof(int) * columnCount));
-    this->valuesInColumns = vector<map<int, long long>> (this->columnCount);
+    // this->valuesInColumns = vector<map<int, long long>> (this->columnCount);
+    this->smallestInColumns = vector<int> (this->columnCount);
+    this->largestInColumns = vector<int> (this->columnCount);
     // this->maxRowsPerBlock = 2; // DEBUG
     // this->writeRow<string>(columns);
 }
@@ -104,11 +106,9 @@ bool Table::blockify() {
     vector<int> row(this->columnCount, 0);
     vector<vector<int>> rowsInPage(this->maxRowsPerBlock, row);
     int pageCounter = 0;
-    this->valuesInColumns = vector<map<int, long long>> (this->columnCount);
-    // set<int> dummy;
-    // dummy.clear();
-    // this->distinctValuesInColumns.assign(this->columnCount, dummy);
-    // this->distinctValuesPerColumnCount.assign(this->columnCount, 0);
+    // this->valuesInColumns = vector<map<int, long long>> (this->columnCount);
+    this->smallestInColumns = vector<int> (this->columnCount);
+    this->largestInColumns = vector<int> (this->columnCount);
     getline(fin, line);
     while (getline(fin, line)) {
         stringstream s(line);
@@ -136,7 +136,7 @@ bool Table::blockify() {
 
     if (this->rowCount == 0)
         return false;
-    // this->distinctValuesInColumns.clear();
+
     return true;
 }
 
@@ -151,11 +151,11 @@ bool Table::blockify() {
 void Table::updateStatistics(vector<int> row) {
     this->rowCount++;
     for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++) {
-        this->valuesInColumns[columnCounter][row[columnCounter]]++;
-        // if (!this->distinctValuesInColumns[columnCounter].count(row[columnCounter])) {
-        //     this->distinctValuesInColumns[columnCounter].insert(row[columnCounter]);
-        //     this->distinctValuesPerColumnCount[columnCounter]++;
-        // }
+        // this->valuesInColumns[columnCounter][row[columnCounter]]++;
+        if (row[columnCounter] < smallestInColumns[columnCounter])
+            smallestInColumns[columnCounter] = row[columnCounter];
+        if (row[columnCounter] > largestInColumns[columnCounter])
+            largestInColumns[columnCounter] = row[columnCounter];
     }
 }
 
@@ -720,8 +720,9 @@ void Table::clearIndex()
         this->initialBucketCount = 0;
         this->rowsPerBlockCount.clear();
         this->rowCount = 0;
-        this->valuesInColumns.clear();
-
+        // this->valuesInColumns.clear();
+        this->smallestInColumns.clear();
+        this->largestInColumns.clear();
         this->blockify();
         
         std::remove(this->sourceFileName.c_str());
@@ -748,12 +749,15 @@ bool Table::remove(const vector<int>& row) {
     }
 
     // heuristic for row not existing
-    for (int i = 0; i < this->columnCount; i++) {
-        if (this->valuesInColumns[i]. find(row[i]) == this->valuesInColumns[i].end() || this->valuesInColumns[i][row[i]] <= 0) {
+    // for (int i = 0; i < this->columnCount; i++) {
+    //     if (this->valuesInColumns[i]. find(row[i]) == this->valuesInColumns[i].end() || this->valuesInColumns[i][row[i]] <= 0) {
+    //         return false;
+    //     }
+    // }
+    for (int i = 0; i < this->columnCount; i++)
+        if (this->smallestInColumns[i] > row[i] || this->largestInColumns[i] < row[i])
             return false;
-        }
-    }
-
+    
     long long foundCount = 0;
     
     if (this->indexingStrategy == NOTHING) {
@@ -904,12 +908,12 @@ bool Table::remove(const vector<int>& row) {
     // GAURANTEED DELETE
 
     // Update statistics
-    for (int i = 0; i < this->columnCount; i++) {
-        this->valuesInColumns[i][row[i]] -= foundCount;
-        if (this->valuesInColumns[i][row[i]] <= 0) {
-            this->valuesInColumns[i].erase(row[i]);
-        }
-    }
+    // for (int i = 0; i < this->columnCount; i++) {
+    //     this->valuesInColumns[i][row[i]] -= foundCount;
+    //     if (this->valuesInColumns[i][row[i]] <= 0) {
+    //         this->valuesInColumns[i].erase(row[i]);
+    //     }
+    // }
     this->rowCount = this->rowCount - foundCount;
 
     return true;

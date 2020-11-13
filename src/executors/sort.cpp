@@ -60,8 +60,9 @@ void executeSORT()
     resultantTable->blockCount = table->blockCount;
     resultantTable->columnCount = table->columnCount;
     resultantTable->columns = table->columns;
-    resultantTable->valuesInColumns = table->valuesInColumns;
-    // resultantTable->distinctValuesPerColumnCount = table->distinctValuesPerColumnCount;
+    // resultantTable->valuesInColumns = table->valuesInColumns;
+    resultantTable->smallestInColumns = table->smallestInColumns;
+    resultantTable->largestInColumns = table->largestInColumns;
     resultantTable->maxRowsPerBlock = table->maxRowsPerBlock;
     resultantTable->rowCount = table->rowCount;
     resultantTable->rowsPerBlockCount.resize(table->blockCount * 3, 0);

@@ -25,7 +25,10 @@ class Table {
 
    public:
     //TODO: Decide if unordered or ordered. If unordered, rewrite selection loops, change line 104 of table.cpp
-    vector<map<int, long long>> valuesInColumns;
+    // vector<map<int, long long>> valuesInColumns;
+    vector<int> smallestInColumns;
+    vector<int> largestInColumns;
+
     string sourceFileName = "";
     string tableName = "";
     vector<string> columns;
