@@ -697,16 +697,35 @@ void Table::clearIndex()
 
     if (this->indexingStrategy == HASH)
     {
-        string oldSourceFileName = this->sourceFileName;
-        this->sourceFileName = "../data/temp/" + tableName + ".csv";
-        this->writeRow<string>(this->columns);
-
+        int blocksWritten = 0;
+        this->rowsPerBlockCount.clear();
+        this->rowCount = 0;
+        
         Cursor cursor = this->getCursor(0, 0);
         vector<int> row = cursor.getNextInAllBuckets();
+        vector<vector<int>> rows;
+        
+        fill(this->smallestInColumns.begin(), this->smallestInColumns.end(), INT_MAX);
+        fill(this->largestInColumns.begin(), this->largestInColumns.end(), INT_MIN);
+
         while (!row.empty())
         {
-            this->writeRow<int>(row);
+            rows.push_back(row);
+            this->updateStatistics(row);
             row = cursor.getNextInAllBuckets();
+            if (rows.size() == this->maxRowsPerBlock)
+            {
+                this->rowsPerBlockCount.emplace_back(rows.size());
+                bufferManager.writeTablePage(this->tableName, blocksWritten++, rows, rows.size());
+                rows.clear();
+            }
+        }
+
+        if (rows.size())
+        {
+            this->rowsPerBlockCount.emplace_back(rows.size());
+            bufferManager.writeTablePage(this->tableName, blocksWritten++, rows, rows.size());
+            rows.clear();
         }
 
         for (int bucket = 0; bucket < this->blocksInBuckets.size(); bucket++)
@@ -715,18 +734,10 @@ void Table::clearIndex()
 
         this->M = 0;
         this->N = 0;
-        this->blockCount = 0;
         this->blocksInBuckets.clear();
         this->initialBucketCount = 0;
-        this->rowsPerBlockCount.clear();
-        this->rowCount = 0;
-        // this->valuesInColumns.clear();
-        this->smallestInColumns.clear();
-        this->largestInColumns.clear();
-        this->blockify();
         
-        std::remove(this->sourceFileName.c_str());
-        this->sourceFileName = oldSourceFileName;   
+        this->blockCount = blocksWritten;
     }
 
     this->indexed = false;
