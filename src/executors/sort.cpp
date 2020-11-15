@@ -171,7 +171,7 @@ void executeSORT()
 
                 runPageIndex += ((runsRead + i) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + i)]++);
                 dataFromPages[i] = (bufferManager.getTablePage(resultantTable->tableName, runPageIndex).data);
-                dataFromPages[i].resize(resultantTable->rowsPerBlockCount[runPageIndex]);
+                // dataFromPages[i].resize(resultantTable->rowsPerBlockCount[runPageIndex]);
                 heap.push(make_pair(dataFromPages[i][rowsReadFromPages[i]++], i));
             }
             vector<vector<int>> rows;
@@ -214,7 +214,7 @@ void executeSORT()
                         int runPageIndex = (passCount & 1 ? 2 * originalBlockCount : originalBlockCount);
                         runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]++);
                         dataFromPages[temp.second] = bufferManager.getTablePage(resultantTable->tableName, runPageIndex).data;
-                        dataFromPages[temp.second].resize(resultantTable->rowsPerBlockCount[runPageIndex]);
+                        // dataFromPages[temp.second].resize(resultantTable->rowsPerBlockCount[runPageIndex]);
                         rowsReadFromPages[temp.second] = 0;
                         heap.push(make_pair(dataFromPages[temp.second][rowsReadFromPages[temp.second]++], temp.second));
                     }

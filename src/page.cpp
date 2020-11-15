@@ -33,11 +33,10 @@ TablePage::TablePage(string tableName, int pageIndex) {
     Table *table = tableCatalogue.getTable(tableName);
     this->columnCount = table->columnCount;
     uint maxRowCount = table->maxRowsPerBlock;
-    vector<int> row(columnCount, 0);
-    this->data.assign(maxRowCount, row);
-
-    ifstream fin(pageName, ios::in);
     this->rowCount = table->rowsPerBlockCount[pageIndex];
+    vector<int> row(columnCount, 0);
+    this->data.assign(this->rowCount, row);
+    ifstream fin(pageName, ios::in);
     int number;
     for (uint rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
         for (int columnCounter = 0; columnCounter < columnCount; columnCounter++) {
@@ -67,9 +66,10 @@ TablePage::TablePage(string tableName, int pageIndex, vector<vector<int>> rows, 
     logger.log("Page::Page");
     this->tableName = tableName;
     this->pageIndex = pageIndex;
-    this->data = rows;
     this->rowCount = rowCount;
-    this->columnCount = rows[0].size();
+    rows.resize(this->rowCount);
+    this->data = rows;
+    this->columnCount = rows[0].size();    
     this->pageName = TABLE_PAGE_NAME(this->tableName, pageIndex);
 }
 

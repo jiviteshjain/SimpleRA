@@ -559,7 +559,7 @@ bool Table::insert(const vector<int>& row) {
             if (this->rowsPerBlockCount[blockIndex] != this->maxRowsPerBlock)
             {
                 rows = bufferManager.getTablePage(this->tableName, blockIndex).data;
-                rows.resize(this->rowsPerBlockCount[blockIndex]);
+                // rows.resize(this->rowsPerBlockCount[blockIndex]);
                 rows.push_back(row);
                 bufferManager.deleteTableFile(this->tableName, blockIndex);
                 bufferManager.writeTablePage(this->tableName, blockIndex, rows, rows.size());
@@ -781,7 +781,7 @@ bool Table::remove(const vector<int>& row) {
             long long foundInPage = 0;
 
             data = bufferManager.getTablePage(this->tableName, pageIndex).data;
-            data.resize(this->rowsPerBlockCount[pageIndex]);
+            // data.resize(this->rowsPerBlockCount[pageIndex]);
 
             it = data.begin();
 
@@ -810,7 +810,7 @@ bool Table::remove(const vector<int>& row) {
                         {
                             vector<vector<int>> rows;
                             rows = bufferManager.getTablePage(this->tableName, i).data;
-                            rows.resize(this->rowsPerBlockCount[i]);
+                            // rows.resize(this->rowsPerBlockCount[i]);
                             rows.insert(std::end(rows), std::begin(data), std::end(data));
 
                             bufferManager.deleteTableFile(this->tableName, pageIndex);
@@ -824,7 +824,7 @@ bool Table::remove(const vector<int>& row) {
                             {
                                 vector<vector<int>> finalBlockRows = bufferManager.getTablePage(this->tableName, this->blockCount - 1).data;
                                 bufferManager.deleteTableFile(this->tableName, this->blockCount - 1);
-                                finalBlockRows.resize(this->rowsPerBlockCount[this->blockCount - 1]);
+                                // finalBlockRows.resize(this->rowsPerBlockCount[this->blockCount - 1]);
                                 bufferManager.writeTablePage(this->tableName, pageIndex, finalBlockRows, finalBlockRows.size());
                                 this->rowsPerBlockCount[pageIndex] = finalBlockRows.size();
                             }
@@ -844,7 +844,7 @@ bool Table::remove(const vector<int>& row) {
                     {
                         vector<vector<int>> finalBlockRows = bufferManager.getTablePage(this->tableName, this->blockCount - 1).data;
                         bufferManager.deleteTableFile(this->tableName, this->blockCount - 1);
-                        finalBlockRows.resize(this->rowsPerBlockCount[this->blockCount - 1]);
+                        // finalBlockRows.resize(this->rowsPerBlockCount[this->blockCount - 1]);
                         bufferManager.writeTablePage(this->tableName, pageIndex, finalBlockRows, finalBlockRows.size());
                         this->rowsPerBlockCount[pageIndex] = finalBlockRows.size();
                     }
@@ -1066,7 +1066,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
 
                 runPageIndex += ((runsRead + i) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + i)]++);
                 dataFromPages[i] = (bufferManager.getTablePage(this->tableName, runPageIndex).data);
-                dataFromPages[i].resize(this->rowsPerBlockCount[runPageIndex]);
+                // dataFromPages[i].resize(this->rowsPerBlockCount[runPageIndex]);
                 heap.push(make_pair(dataFromPages[i][rowsReadFromPages[i]++], i));
             }
             vector<vector<int>> rows;
@@ -1111,7 +1111,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                         int runPageIndex = (passCount & 1 ? newBlockCount + originalBlockCount : newBlockCount);
                         runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]++);
                         dataFromPages[temp.second] = bufferManager.getTablePage(this->tableName, runPageIndex).data;
-                        dataFromPages[temp.second].resize(this->rowsPerBlockCount[runPageIndex]);
+                        // dataFromPages[temp.second].resize(this->rowsPerBlockCount[runPageIndex]);
                         rowsReadFromPages[temp.second] = 0;
                         heap.push(make_pair(dataFromPages[temp.second][rowsReadFromPages[temp.second]++], temp.second));
                     }

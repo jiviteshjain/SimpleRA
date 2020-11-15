@@ -173,7 +173,7 @@ void executeALTERTABLE()
         {
             rows = bufferManager.getTablePage(newTable->tableName, i).data;
             bufferManager.deleteTableFile(newTable->tableName, i);
-            rows.resize(newTable->rowsPerBlockCount[i]);
+            // rows.resize(newTable->rowsPerBlockCount[i]);
             bufferManager.writeTablePage(tableName, i, rows, rows.size());
         }
 
