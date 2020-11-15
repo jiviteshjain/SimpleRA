@@ -47,6 +47,10 @@ Table::Table(string tableName, vector<string> columns) {
     // this->writeRow<string>(columns);
 }
 
+inline float Table::density() {
+    return ((float)this->rowCount)/(this->blockCount * this->maxRowsPerBlock);
+}
+
 /**
  * @brief The load function is used when the LOAD command is encountered. It
  * reads data from the source file, splits it into blocks and updates table
@@ -791,6 +795,47 @@ void Table::clearIndex()
     return;
 }
 
+void Table::mergeBlocks(int bucket) {
+    
+    bool foundAndFixed;
+    do {
+        foundAndFixed = false;
+        for (int i = 0; i < this->blocksInBuckets[bucket].size(); i++) {
+            if (this->blocksInBuckets[bucket][i] == this->maxRowsPerBlock) {
+                continue;
+            }
+            if (this->blocksInBuckets[bucket][i] == 0) {
+                continue;
+            }
+            for (int j = i + 1; j < this->blocksInBuckets[bucket].size(); j++) {
+                if (this->blocksInBuckets[bucket][i] + this->blocksInBuckets[bucket][j] > this->maxRowsPerBlock) {
+                    continue;
+                }
+                if (this->blocksInBuckets[bucket][j] == 0) {
+                    continue;
+                }
+
+                auto tail = bufferManager.getHashPage(this->tableName, bucket, j).data;
+                bufferManager.deleteHashFile(this->tableName, bucket, j);
+
+                auto head = bufferManager.getHashPage(this->tableName, bucket, i).data;
+                head.insert(head.end(), tail.begin(), tail.end());
+
+                bufferManager.writeHashPage(this->tableName, bucket, i, head);
+                this->blocksInBuckets[bucket][i] += this->blocksInBuckets[bucket][j];
+                this->blocksInBuckets[bucket][j] = 0;
+
+                foundAndFixed = true;
+                break;
+            }
+
+            if (foundAndFixed) {
+                break;
+            }
+        }
+    } while (foundAndFixed);
+}
+
 /**
  * @brief Deletes a row, if exists, from the table
  * 
@@ -901,7 +946,9 @@ bool Table::remove(const vector<int>& row) {
                 foundCount = foundCount + foundInPage;
             }
         }
-    
+
+        this->rowCount = this->rowCount - foundCount;
+
     } else if (this->indexingStrategy == HASH) {
 
         // check corresponding bucket
@@ -944,35 +991,101 @@ bool Table::remove(const vector<int>& row) {
         }
 
         if (foundCount > 0) {
+            
+            this->rowCount = this->rowCount - foundCount;
+
             // clean up pages of size 0
-            this->cleanupBlocks(bucket);
+            this->cleanupBlocks(bucket); // not doing merge blocks to let underflow do it
+
 
             // combine only on underflow
             // rowCount is updated later, so -foundCount
             // we want to compare it with the original blockCount
-            if ((this->rowCount - foundCount) / this->blockCount < HASH_DENSITY_MIN) {
+            if ((this->rowCount / this->blockCount) < HASH_DENSITY_MIN) {
                 this->linearHashCombine();
             }
         }
+
+    } else { // B+Tree
+
+        // check corresponding bucket
+        // does not use cursor because have to modify page if row was actually found
+        auto record = this->bTree.find(row[this->indexedColumn], nullptr); // not out of range
+        if (record == nullptr) {
+            return false;
+        }
+        int bucket = record->val();
+
+        // to avoid repeated constructor and destructor calls
+        vector<vector<int>> data;
+        vector<vector<int>>::iterator it;
+
+        int minn = INT_MAX, maxx = INT_MIN;
+        bool anotherOneExists = false;
+        bool somethingElseExists = false;
+
+        for (int i = 0; i < this->blocksInBuckets[bucket].size(); i++) {
+            long long foundInPage = 0;
+
+            data = bufferManager.getHashPage(this->tableName, bucket, i).data;
+            it = data.begin();
+
+            while (it != data.end()) {
+                if (*it == row) {
+                    it = data.erase(it);
+                    foundInPage++;
+                } else {
+                    minn = min(minn, it->operator[](this->indexedColumn));
+                    maxx = max(maxx, it->operator[](this->indexedColumn));
+                    anotherOneExists |= (it->operator[](this->indexedColumn) == row[this->indexedColumn]);
+                    it++;
+                    somethingElseExists = true;
+                }
+            }
+
+            if (foundInPage > 0) {
+                this->blocksInBuckets[bucket][i] = data.size();
+
+                if (data.size() > 0) {
+                    bufferManager.writeHashPage(this->tableName, bucket, i, data);
+                } else {
+                    bufferManager.deleteHashFile(this->tableName, bucket, i);
+                }
+
+                foundCount = foundCount + foundInPage;
+            }
+        }
+
+        if (foundCount > 0) {
+            this->rowCount = this->rowCount - foundCount;
+            
+            if (somethingElseExists) {
+                this->bucketRanges[bucket] = make_pair(minn, maxx);
+            }
+
+            if (!anotherOneExists) {
+                this->bTree.del(row[this->indexedColumn]);
+            }
+
+            // merge blocks that can be merged
+            this->mergeBlocks(bucket); 
+            
+            // clean up pages of size 0
+            this->cleanupBlocks(bucket);
+
+            // under extreme circumstances, consider reindexing
+            if (this->density() < REINDEX_MIN_THRESH) {
+                int colIndex = this->indexedColumn;
+                int fanout = this->bTree.ord();
+
+                this->clearIndex();
+                this->bTreeIndex(this->columns[colIndex], fanout);
+            }
+
+        }
     }
 
-    
-    if (foundCount == 0) {
-        return false;
-    }
-
-    // GAURANTEED DELETE
-
-    // Update statistics
-    // for (int i = 0; i < this->columnCount; i++) {
-    //     this->valuesInColumns[i][row[i]] -= foundCount;
-    //     if (this->valuesInColumns[i][row[i]] <= 0) {
-    //         this->valuesInColumns[i].erase(row[i]);
-    //     }
-    // }
-    this->rowCount = this->rowCount - foundCount;
-
-    return true;
+    return (foundCount != 0);
 }
 
 void Table::linearHashCombine() {

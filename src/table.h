@@ -13,6 +13,7 @@ enum IndexingStrategy {
 #define HASH_DENSITY_MIN 0.6
 
 #define INIT_INDEXED_CAPACITY 0.7
+#define REINDEX_MIN_THRESH 0.3
 #define DEFAULT_INDEX_RESERVE 30
 
 /**
@@ -70,9 +71,11 @@ class Table {
     bool insert(const vector<int>& row);
     bool remove(const vector<int>& row);
     
+    
     // FOR INDEXING
     // We don't use rowsPerBlockCount, because the blocks now have overflow chains and cannot be numbered sequentially. Instead use blocksInBuckets.
     vector<vector<int>> blocksInBuckets;
+    float density();
     void clearIndex();
 
     // FOR LINEAR HASHING
@@ -95,6 +98,9 @@ class Table {
     vector<pair<int, int>> bucketRanges;
 
     void bTreeIndex(const string& columnName, int fanout);
+    void mergeBlocks(int bucket);
+
+
 
     /**
  * @brief Static function that takes a vector of valued and prints them out in a
