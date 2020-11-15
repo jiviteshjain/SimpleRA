@@ -1,5 +1,9 @@
 #include "global.h"
 
+bool secondLessThan(const pair<int, int>& left, int right) {
+    return left.second < right;
+}
+
 /**
  * @brief Construct a new Table:: Table object
  *
@@ -589,7 +593,40 @@ bool Table::insert(const vector<int>& row) {
         }
 
     } else if (this->indexingStrategy == BTREE) {
-        ;
+        int key = row[this->indexedColumn]; // always in bounds
+        auto record = this->bTree.find(key, nullptr);
+        
+        bool overflow;
+        if (record != nullptr) {
+            // this key already exists
+            // bucketRanges, hence, do not need to be updated
+            overflow = this->insertIntoHashBucket(row, record->val());
+        } else {
+            // key doesn't already exist
+            // binary search a place for it
+            auto potential = lower_bound(this->bucketRanges.begin(), this->bucketRanges.end(), key, secondLessThan);
+
+            int bucket;
+            if (potential == this->bucketRanges.end()) {
+                // insert in the last block
+                bucket = this->blocksInBuckets.size() - 1;
+            } else {
+                // insert in potential
+                bucket = potential - this->bucketRanges.begin();
+            }
+
+            this->bTree.insert(key, bucket);
+            overflow = this->insertIntoHashBucket(row, bucket);
+
+            // update bucket ranges
+            this->bucketRanges[bucket].first = min(this->bucketRanges[bucket].first, key);
+            this->bucketRanges[bucket].second = max(this->bucketRanges[bucket].second, key);
+        }
+
+        // TODO: on overflow, consider reindexing
+        if (overflow) {
+            ;
+        }
     }
 
     // Update metadata
@@ -1218,7 +1255,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
     for (int i = 0; i < originalBlockCount; i++)
         bufferManager.deleteTableFile(this->tableName, i);
 
-    this->maxRowsPerBlock = newMaxRowsPerBlock;
+    // this->maxRowsPerBlock = newMaxRowsPerBlock;
     this->blockCount = this->blocksInBuckets.size(); //or finalBlocksWritten or newBlockCount
     this->rowsPerBlockCount.clear();
 
@@ -1265,4 +1302,8 @@ void Table::bTreeIndex(const string& columnName, int fanout) {
             row = cursor.getNextInBucket();
         }
     }
+
+    this->indexed = true;
+    this->indexingStrategy = BTREE;
+    this->indexedColumn = colIndex;
 }

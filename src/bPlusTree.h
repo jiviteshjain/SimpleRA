@@ -97,6 +97,10 @@ class Record {
    public:
     Record() : value(0){};
     Record(int value) : value(value){};
+
+    int val() {
+        return this->value;
+    }
 };
 
 class BPlusTree {

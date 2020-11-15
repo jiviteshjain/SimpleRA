@@ -12,7 +12,7 @@ enum IndexingStrategy {
 #define HASH_DENSITY_MAX 0.9
 #define HASH_DENSITY_MIN 0.6
 
-#define INIT_INDEXED_CAPACITY 0.6
+#define INIT_INDEXED_CAPACITY 0.7
 #define DEFAULT_INDEX_RESERVE 30
 
 /**
