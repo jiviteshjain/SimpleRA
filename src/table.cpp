@@ -974,7 +974,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
 
     int newMaxRowsPerBlock = floor(this->maxRowsPerBlock * capacity);
     int newBlockCount = ceil(this->rowCount * 1.0 / newMaxRowsPerBlock * 1.0);
-
+    this->blocksInBuckets.resize(newBlockCount);
     this->rowsPerBlockCount.resize(newBlockCount + 2 * originalBlockCount);
 
     int blocksWritten = 0;
@@ -1055,6 +1055,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
 
                 runPageIndex += ((runsRead + i) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + i)]++);
                 dataFromPages[i] = (bufferManager.getTablePage(this->tableName, runPageIndex).data);
+                dataFromPages[i].resize(this->rowsPerBlockCount[runPageIndex]);
                 heap.push(make_pair(dataFromPages[i][rowsReadFromPages[i]++], i));
             }
             vector<vector<int>> rows;
@@ -1066,8 +1067,10 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                 rows.push_back(temp.first);
                 if (rows.size() == newMaxRowsPerBlock && passCount == totalPasses - 1)
                 {
-                    this->rowsPerBlockCount[finalBlocksWritten] = rows.size();
-                    bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, rows, rows.size());
+                    this->blocksInBuckets[finalBlocksWritten].emplace_back(rows.size());
+                    bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, rows);
+                    // bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, rows, rows.size());
+                    // this->rowsPerBlockCount[finalBlocksWritten] = rows.size();
 
                     pagesInRun[(passCount + 1) * zerothPassRunsCount + runsWritten]++;
                     rows.clear();
@@ -1097,6 +1100,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                         int runPageIndex = (passCount & 1 ? newBlockCount + originalBlockCount : newBlockCount);
                         runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]++);
                         dataFromPages[temp.second] = bufferManager.getTablePage(this->tableName, runPageIndex).data;
+                        dataFromPages[temp.second].resize(this->rowsPerBlockCount[runPageIndex]);
                         rowsReadFromPages[temp.second] = 0;
                         heap.push(make_pair(dataFromPages[temp.second][rowsReadFromPages[temp.second]++], temp.second));
                     }
@@ -1110,9 +1114,10 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
 
                 if (passCount == totalPasses - 1)
                 {
-                    // bufferManager.deleteTableFile(this->tableName, finalBlocksWritten);
-                    this->rowsPerBlockCount[finalBlocksWritten] = rows.size();
-                    bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, rows, rows.size());
+                    this->blocksInBuckets[finalBlocksWritten].emplace_back(rows.size());
+                    bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, rows);
+                    // this->rowsPerBlockCount[finalBlocksWritten] = rows.size();
+                    // bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, rows, rows.size());
                 }
                 else
                 {
@@ -1137,6 +1142,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
         if (totalPasses == 0)
         {
             vector<vector<int>> rows = bufferManager.getTablePage(this->tableName, i).data;
+            rows.resize(this->rowsPerBlockCount[i]);
             vector<vector<int>> subvector;
             int rowsWritten = 0;
 
@@ -1150,17 +1156,23 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                 else
                 {
                     subvector = {rows.begin() + rowsWritten, rows.end()};
-                    rowsWritten = rows.size();;
+                    rowsWritten = rows.size();
                 }
-                this->rowsPerBlockCount[finalBlocksWritten] = subvector.size();
-                bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, subvector, subvector.size());
+                this->blocksInBuckets[finalBlocksWritten].emplace_back(subvector.size());
+                bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, subvector);
+                // this->rowsPerBlockCount[finalBlocksWritten] = subvector.size();
+                // bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, subvector, subvector.size());
             }
         }
         bufferManager.deleteTableFile(this->tableName, i);
     }
 
-    this->maxRowsPerBlock = newMaxRowsPerBlock;
-    this->blockCount = newBlockCount;
+    for (int i = 0; i < originalBlockCount; i++)
+        bufferManager.deleteTableFile(this->tableName, i);
 
+    this->maxRowsPerBlock = newMaxRowsPerBlock;
+    this->blockCount = 0;
+    this->rowsPerBlockCount.clear();
+    
     return;
 }
