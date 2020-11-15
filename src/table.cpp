@@ -561,7 +561,7 @@ bool Table::insert(const vector<int>& row) {
                 rows = bufferManager.getTablePage(this->tableName, blockIndex).data;
                 // rows.resize(this->rowsPerBlockCount[blockIndex]);
                 rows.push_back(row);
-                bufferManager.deleteTableFile(this->tableName, blockIndex);
+                // bufferManager.deleteTableFile(this->tableName, blockIndex);
                 bufferManager.writeTablePage(this->tableName, blockIndex, rows, rows.size());
                 this->rowsPerBlockCount[blockIndex] = rows.size();
                 break;
@@ -815,8 +815,8 @@ bool Table::remove(const vector<int>& row) {
 
                             bufferManager.deleteTableFile(this->tableName, pageIndex);
                             this->rowsPerBlockCount[pageIndex] = 0;
-                            bufferManager.deleteTableFile(this->tableName, i);
-                            this->rowsPerBlockCount[i] = 0;
+                            // bufferManager.deleteTableFile(this->tableName, i);
+                            // this->rowsPerBlockCount[i] = 0;
 
                             bufferManager.writeTablePage(this->tableName, i, rows, rows.size());
                             this->rowsPerBlockCount[i] = rows.size();
