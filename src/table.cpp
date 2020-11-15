@@ -1171,7 +1171,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
         bufferManager.deleteTableFile(this->tableName, i);
 
     this->maxRowsPerBlock = newMaxRowsPerBlock;
-    this->blockCount = 0;
+    this->blockCount = this->blocksInBuckets.size(); //or finalBlocksWritten or newBlockCount
     this->rowsPerBlockCount.clear();
     
     return;
