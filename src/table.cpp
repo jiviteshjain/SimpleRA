@@ -597,16 +597,17 @@ bool Table::insert(const vector<int>& row) {
         auto record = this->bTree.find(key, nullptr);
         
         bool overflow;
+        int bucket;
         if (record != nullptr) {
             // this key already exists
             // bucketRanges, hence, do not need to be updated
-            overflow = this->insertIntoHashBucket(row, record->val());
+            bucket = record->val();
+            overflow = this->insertIntoHashBucket(row, bucket);
         } else {
             // key doesn't already exist
             // binary search a place for it
             auto potential = lower_bound(this->bucketRanges.begin(), this->bucketRanges.end(), key, secondLessThan);
 
-            int bucket;
             if (potential == this->bucketRanges.end()) {
                 // insert in the last block
                 bucket = this->blocksInBuckets.size() - 1;
@@ -623,9 +624,16 @@ bool Table::insert(const vector<int>& row) {
             this->bucketRanges[bucket].second = max(this->bucketRanges[bucket].second, key);
         }
 
-        // TODO: on overflow, consider reindexing
+        // On overflow, consider reindexing
         if (overflow) {
-            ;
+            if (blocksInBuckets[bucket].size() > 2 * blocksInBuckets.size() + 1) {
+                int colIndex = this->indexedColumn;
+                int fanout = this->bTree.ord();
+
+                this->clearIndex();
+                this->bTreeIndex(this->columns[colIndex], fanout);
+            }
+            
         }
     }
 

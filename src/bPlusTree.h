@@ -227,6 +227,10 @@ class BPlusTree {
         this->verbose = verbose;
         this->reserve = reserve;
     }
+
+    int ord() {
+        return this->order;
+    }
 };
 
 #endif
