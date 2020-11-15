@@ -124,7 +124,7 @@ void retrieveResult(Table *table, Table *resultantTable, int bucket)
         if (rows.size() == resultantTable->maxRowsPerBlock - resultantTable->rowsPerBlockCount[resultantTable->blockCount - 1])
         {
             vector<vector<int>> rowsInLastPage = bufferManager.getTablePage(resultantTable->tableName, resultantTable->blockCount - 1).data;
-            rowsInLastPage.resize(resultantTable->rowsPerBlockCount[resultantTable->blockCount - 1]);
+            // rowsInLastPage.resize(resultantTable->rowsPerBlockCount[resultantTable->blockCount - 1]);
             rowsInLastPage.insert(std::end(rowsInLastPage), std::begin(rows), std::end(rows));
             bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount - 1, rowsInLastPage, rowsInLastPage.size());
             resultantTable->rowsPerBlockCount[resultantTable->blockCount - 1] = resultantTable->maxRowsPerBlock;
@@ -159,7 +159,7 @@ void retrieveResult(Table *table, Table *resultantTable, int bucket)
         if (resultantTable->rowsPerBlockCount.size() && rows.size() <= resultantTable->maxRowsPerBlock - resultantTable->rowsPerBlockCount[resultantTable->blockCount - 1])
         {
             vector<vector<int>> rowsInLastPage = bufferManager.getTablePage(resultantTable->tableName, resultantTable->blockCount - 1).data;
-            rowsInLastPage.resize(resultantTable->rowsPerBlockCount[resultantTable->blockCount - 1]);
+            // rowsInLastPage.resize(resultantTable->rowsPerBlockCount[resultantTable->blockCount - 1]);
             rowsInLastPage.insert(std::end(rowsInLastPage), std::begin(rows), std::end(rows));
             bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount - 1, rowsInLastPage, rowsInLastPage.size());
             resultantTable->rowsPerBlockCount[resultantTable->blockCount - 1] = rowsInLastPage.size();
@@ -286,7 +286,7 @@ void executeSELECTION()
         else if (parsedQuery.selectionBinaryOperator == LESS_THAN)
         {
             set<int> bucketsVisited;
-            for (int i = table->smallestInColumns[firstColumnIndex]; i < parsedQuery.selectionIntLiteral, bucketsVisited.size() != table->blocksInBuckets.size(); i++)
+            for (int i = table->smallestInColumns[firstColumnIndex]; i < parsedQuery.selectionIntLiteral && bucketsVisited.size() != table->blocksInBuckets.size(); i++)
             {
                 int bucket = table->hash(i);
                 if (bucketsVisited.find(bucket) == bucketsVisited.end())
@@ -302,7 +302,7 @@ void executeSELECTION()
         else if (parsedQuery.selectionBinaryOperator == LEQ)
         {
             set<int> bucketsVisited;
-            for (int i = table->smallestInColumns[firstColumnIndex]; i <= parsedQuery.selectionIntLiteral, bucketsVisited.size() != table->blocksInBuckets.size(); i++)
+            for (int i = table->smallestInColumns[firstColumnIndex]; i <= parsedQuery.selectionIntLiteral && bucketsVisited.size() != table->blocksInBuckets.size(); i++)
             {
                 int bucket = table->hash(i);
                 if (bucketsVisited.find(bucket) == bucketsVisited.end())
@@ -318,7 +318,7 @@ void executeSELECTION()
         else if (parsedQuery.selectionBinaryOperator == GREATER_THAN)
         {
             set<int> bucketsVisited;
-            for (int i = parsedQuery.selectionIntLiteral + 1; i < table->largestInColumns[firstColumnIndex], bucketsVisited.size() != table->blocksInBuckets.size(); i++)
+            for (int i = parsedQuery.selectionIntLiteral + 1; i < table->largestInColumns[firstColumnIndex] && bucketsVisited.size() != table->blocksInBuckets.size(); i++)
             {
                 int bucket = table->hash(i);
                 if (bucketsVisited.find(bucket) == bucketsVisited.end())
@@ -334,7 +334,7 @@ void executeSELECTION()
         else if (parsedQuery.selectionBinaryOperator == GEQ)
         {
             set<int> bucketsVisited;
-            for (int i = parsedQuery.selectionIntLiteral + 1; i < table->largestInColumns[firstColumnIndex], bucketsVisited.size() != table->blocksInBuckets.size(); i++)
+            for (int i = parsedQuery.selectionIntLiteral + 1; i < table->largestInColumns[firstColumnIndex] && bucketsVisited.size() != table->blocksInBuckets.size(); i++)
             {
                 int bucket = table->hash(i);
                 if (bucketsVisited.find(bucket) == bucketsVisited.end())
