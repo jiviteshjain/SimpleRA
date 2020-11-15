@@ -744,50 +744,54 @@ void Table::clearIndex()
     if (!this->indexed)
         return;
 
-    if (this->indexingStrategy == HASH)
+    // FOR BOTH B+TREE AND HASH
+
+    int blocksWritten = 0;
+    this->rowsPerBlockCount.clear();
+    this->rowCount = 0;
+    
+    Cursor cursor = this->getCursor(0, 0);
+    vector<int> row = cursor.getNextInAllBuckets();
+    vector<vector<int>> rows;
+    
+    fill(this->smallestInColumns.begin(), this->smallestInColumns.end(), INT_MAX);
+    fill(this->largestInColumns.begin(), this->largestInColumns.end(), INT_MIN);
+
+    while (!row.empty())
     {
-        int blocksWritten = 0;
-        this->rowsPerBlockCount.clear();
-        this->rowCount = 0;
-        
-        Cursor cursor = this->getCursor(0, 0);
-        vector<int> row = cursor.getNextInAllBuckets();
-        vector<vector<int>> rows;
-        
-        fill(this->smallestInColumns.begin(), this->smallestInColumns.end(), INT_MAX);
-        fill(this->largestInColumns.begin(), this->largestInColumns.end(), INT_MIN);
-
-        while (!row.empty())
-        {
-            rows.push_back(row);
-            this->updateStatistics(row);
-            row = cursor.getNextInAllBuckets();
-            if (rows.size() == this->maxRowsPerBlock)
-            {
-                this->rowsPerBlockCount.emplace_back(rows.size());
-                bufferManager.writeTablePage(this->tableName, blocksWritten++, rows, rows.size());
-                rows.clear();
-            }
-        }
-
-        if (rows.size())
+        rows.push_back(row);
+        this->updateStatistics(row);
+        row = cursor.getNextInAllBuckets();
+        if (rows.size() == this->maxRowsPerBlock)
         {
             this->rowsPerBlockCount.emplace_back(rows.size());
             bufferManager.writeTablePage(this->tableName, blocksWritten++, rows, rows.size());
             rows.clear();
         }
+    }
 
-        for (int bucket = 0; bucket < this->blocksInBuckets.size(); bucket++)
-            for (int chainCount = 0; chainCount < this->blocksInBuckets[bucket].size(); chainCount++)
-                bufferManager.deleteHashFile(this->tableName, bucket, chainCount);
+    if (rows.size())
+    {
+        this->rowsPerBlockCount.emplace_back(rows.size());
+        bufferManager.writeTablePage(this->tableName, blocksWritten++, rows, rows.size());
+        rows.clear();
+    }
 
+    for (int bucket = 0; bucket < this->blocksInBuckets.size(); bucket++)
+        for (int chainCount = 0; chainCount < this->blocksInBuckets[bucket].size(); chainCount++)
+            bufferManager.deleteHashFile(this->tableName, bucket, chainCount);
+
+    this->blocksInBuckets.clear();
+    if (this->indexingStrategy == HASH) {
         this->M = 0;
         this->N = 0;
-        this->blocksInBuckets.clear();
         this->initialBucketCount = 0;
-        
-        this->blockCount = blocksWritten;
+    } else {
+        this->bTree.destroy_tree();
+        this->bucketRanges.clear();
     }
+    
+    this->blockCount = blocksWritten;
 
     this->indexed = false;
     this->indexingStrategy = NOTHING;
