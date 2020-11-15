@@ -1137,42 +1137,78 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
         runsCount = ceil((float)runsCount / (bufferSize - 1));
     }
 
-    for (int i = newBlockCount; i < this->blockCount; i++)
+    if (totalPasses == 0)
     {
-        if (totalPasses == 0)
+        vector<vector<int>> rows;
+        vector<vector<int>> pageData;
+        for (int i = newBlockCount; i < this->blockCount; i++)
         {
-            vector<vector<int>> rows = bufferManager.getTablePage(this->tableName, i).data;
-            rows.resize(this->rowsPerBlockCount[i]);
-            vector<vector<int>> subvector;
-            int rowsWritten = 0;
-
-            while (rowsWritten < rows.size())
-            {
-                if (rowsWritten + newMaxRowsPerBlock <= rows.size())
-                {
-                    subvector = {rows.begin() + rowsWritten, rows.begin() + rowsWritten + newMaxRowsPerBlock};
-                    rowsWritten += newMaxRowsPerBlock;
-                }
-                else
-                {
-                    subvector = {rows.begin() + rowsWritten, rows.end()};
-                    rowsWritten = rows.size();
-                }
-                this->blocksInBuckets[finalBlocksWritten].emplace_back(subvector.size());
-                bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, subvector);
-                // this->rowsPerBlockCount[finalBlocksWritten] = subvector.size();
-                // bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, subvector, subvector.size());
-            }
+            pageData = bufferManager.getTablePage(this->tableName, i).data;
+            if (!rows.size())
+                rows = pageData;
+            else
+                rows.insert(std::end(rows), std::begin(pageData), std::end(pageData));
         }
-        bufferManager.deleteTableFile(this->tableName, i);
+
+        vector<vector<int>> subvector;
+        int rowsWritten = 0;
+
+        while (rowsWritten + newMaxRowsPerBlock <= rows.size())
+        {
+            subvector = {rows.begin() + rowsWritten, rows.begin() + rowsWritten + newMaxRowsPerBlock};
+            rowsWritten += newMaxRowsPerBlock;
+            this->blocksInBuckets[finalBlocksWritten].emplace_back(subvector.size());
+            bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, subvector);
+        }
+
+        if (rowsWritten < rows.size())
+        {
+            subvector = {rows.begin() + rowsWritten, rows.end()};
+            rowsWritten = rows.size();
+            this->blocksInBuckets[finalBlocksWritten].emplace_back(subvector.size());
+            bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, subvector);
+        }
     }
 
+
+        // for (int i = newBlockCount; i < this->blockCount; i++)
+        // {
+        //     if (totalPasses == 0)
+        //     {
+        //         vector<vector<int>> rows = bufferManager.getTablePage(this->tableName, i).data;
+        //         rows.resize(this->rowsPerBlockCount[i]);
+        //         vector<vector<int>> subvector;
+        //         int rowsWritten = 0;
+
+        //         while (rowsWritten < rows.size())
+        //         {
+        //             if (rowsWritten + newMaxRowsPerBlock <= rows.size())
+        //             {
+        //                 subvector = {rows.begin() + rowsWritten, rows.begin() + rowsWritten + newMaxRowsPerBlock};
+        //                 rowsWritten += newMaxRowsPerBlock;
+        //             }
+        //             else
+        //             {
+        //                 subvector = {rows.begin() + rowsWritten, rows.end()};
+        //                 rowsWritten = rows.size();
+        //             }
+        //             this->blocksInBuckets[finalBlocksWritten].emplace_back(subvector.size());
+        //             bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, subvector);
+        //             // this->rowsPerBlockCount[finalBlocksWritten] = subvector.size();
+        //             // bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, subvector, subvector.size());
+        //         }
+        //     }
+        //     bufferManager.deleteTableFile(this->tableName, i);
+        // }
+
+    for (int i = newBlockCount; i < this->blockCount; i++)
+        bufferManager.deleteTableFile(this->tableName, i);
     for (int i = 0; i < originalBlockCount; i++)
         bufferManager.deleteTableFile(this->tableName, i);
 
     this->maxRowsPerBlock = newMaxRowsPerBlock;
     this->blockCount = this->blocksInBuckets.size(); //or finalBlocksWritten or newBlockCount
     this->rowsPerBlockCount.clear();
-    
+
     return;
 }
