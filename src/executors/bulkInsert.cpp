@@ -70,27 +70,31 @@ void executeBULKINSERT()
     {
         vector<vector<int>> rowsInPage(table->maxRowsPerBlock, row);
         int pageCounter = 0;
-        while (getline(fin, line))
+        
+        if (table->maxRowsPerBlock - table->rowsPerBlockCount[table->blockCount - 1] == 0)
         {
-            stringstream s(line);
-            for (int columnCounter = 0; columnCounter < table->columnCount; columnCounter++)
+            while (getline(fin, line))
             {
-                if (!getline(s, word, ','))
-                    return;
-                row[columnCounter] = stoi(word);
-                rowsInPage[pageCounter][columnCounter] = row[columnCounter];
-            }
-            pageCounter++;
-            table->updateStatistics(row);
-            if (pageCounter == table->maxRowsPerBlock - table->rowsPerBlockCount[table->blockCount - 1])
-            {
-                vector<vector<int>> rowsInLastPage = bufferManager.getTablePage(table->tableName, table->blockCount - 1).data;
-                rowsInLastPage.resize(table->rowsPerBlockCount[table->blockCount - 1]);
-                rowsInLastPage.insert(std::end(rowsInLastPage), std::begin(rowsInPage), std::end(rowsInPage));
-                bufferManager.writeTablePage(table->tableName, table->blockCount - 1, rowsInLastPage, table->maxRowsPerBlock);
-                table->rowsPerBlockCount[table->blockCount - 1] = table->maxRowsPerBlock;
-                pageCounter = 0;
-                break;
+                stringstream s(line);
+                for (int columnCounter = 0; columnCounter < table->columnCount; columnCounter++)
+                {
+                    if (!getline(s, word, ','))
+                        return;
+                    row[columnCounter] = stoi(word);
+                    rowsInPage[pageCounter][columnCounter] = row[columnCounter];
+                }
+                pageCounter++;
+                table->updateStatistics(row);
+                if (pageCounter == table->maxRowsPerBlock - table->rowsPerBlockCount[table->blockCount - 1])
+                {
+                    vector<vector<int>> rowsInLastPage = bufferManager.getTablePage(table->tableName, table->blockCount - 1).data;
+                    rowsInLastPage.resize(table->rowsPerBlockCount[table->blockCount - 1]);
+                    rowsInLastPage.insert(std::end(rowsInLastPage), std::begin(rowsInPage), std::end(rowsInPage));
+                    bufferManager.writeTablePage(table->tableName, table->blockCount - 1, rowsInLastPage, table->maxRowsPerBlock);
+                    table->rowsPerBlockCount[table->blockCount - 1] = table->maxRowsPerBlock;
+                    pageCounter = 0;
+                    break;
+                }
             }
         }
 
