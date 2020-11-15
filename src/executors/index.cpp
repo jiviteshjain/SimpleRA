@@ -67,7 +67,7 @@ void executeINDEX() {
     } else if (parsedQuery.indexingStrategy == HASH) {
         table->linearHash(parsedQuery.indexColumnName, stoi(tokenizedQuery[8]));
     } else if (parsedQuery.indexingStrategy == BTREE) {
-        ; // TODO: btree
+        table->bTreeIndex(parsedQuery.indexColumnName, stoi(tokenizedQuery[8]));
     }
     // cout << "Column = " << table->columns[table->indexedColumn] << endl
     //      << "Indexed = " << table->indexed << endl;

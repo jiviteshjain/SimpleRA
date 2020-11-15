@@ -12,6 +12,9 @@ enum IndexingStrategy {
 #define HASH_DENSITY_MAX 0.9
 #define HASH_DENSITY_MIN 0.6
 
+#define INIT_INDEXED_CAPACITY 0.6
+#define DEFAULT_INDEX_RESERVE 30
+
 /**
  * @brief The Table class holds all information related to a loaded table. It
  * also implements methods that interact with the parsers, executors, cursors
@@ -66,6 +69,12 @@ class Table {
     void sort(int bufferSize, string columnName, float capacity, int sortingStrategy);
     bool insert(const vector<int>& row);
     bool remove(const vector<int>& row);
+    
+    // FOR INDEXING
+    // We don't use rowsPerBlockCount, because the blocks now have overflow chains and cannot be numbered sequentially. Instead use blocksInBuckets.
+    vector<vector<int>> blocksInBuckets;
+    void clearIndex();
+
     // FOR LINEAR HASHING
 
     int M = 0; // different from blockCount, as blockCount includes overflow blocks as well
@@ -73,8 +82,6 @@ class Table {
     int initialBucketCount = 0;
     // TODO: Make these private
 
-    // We don't use rowsPerBlockCount, because the blocks now have overflow chains and cannot be numbered sequentially. Instead use blocksInBuckets.
-    vector<vector<int>> blocksInBuckets;
     
     int hash(int key);
     void linearHash(const string &columnName, int bucketCount);
@@ -82,7 +89,12 @@ class Table {
     void linearHashSplit();
     void linearHashCombine();
     void cleanupBlocks(int bucket);
-    void clearIndex();
+
+    // FOR B+PLUS TREE
+    BPlusTree bTree;
+    vector<pair<int, int>> bucketRanges;
+
+    void bTreeIndex(const string& columnName, int fanout);
 
     /**
  * @brief Static function that takes a vector of valued and prints them out in a

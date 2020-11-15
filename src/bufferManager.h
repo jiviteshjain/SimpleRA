@@ -1,8 +1,8 @@
 #ifndef __BUFFERMANAGER_H
 #define __BUFFERMANAGER_H
 
-#include"page.h"
-
+#include "page.h"
+#include "bPlusTree.h"
 /**
  * @brief The BufferManager is responsible for reading pages to the main memory.
  * Recall that large files are broken and stored as blocks in the hard disk. The

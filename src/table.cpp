@@ -976,6 +976,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
     vector<int> row = cursor.getNext();
 
     int columnIndex = this->getColumnIndex(columnName);
+    // TODO: change this to use columnindex directly
     int runsCount = 0;
     int zerothPassRunsCount;
     unordered_map<int, int> pagesInRun;
@@ -1222,4 +1223,46 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
     this->rowsPerBlockCount.clear();
 
     return;
+}
+
+// B+TREE INDEXING
+
+void Table::bTreeIndex(const string& columnName, int fanout) {
+    
+    int colIndex = this->getColumnIndex(columnName);
+    this->clearIndex();
+
+    /* This would:
+     * clear rowsPerBlockCount
+     * and set blocksInBucket
+     * 
+     * Unlike linearhash, every bucket is initially guaranteed
+     * to contain something.
+     */
+    this->sort(BUFFER_SIZE, columnName, INIT_INDEXED_CAPACITY, 0);
+    // TODO: check metadata match
+
+    // TODO: Figure out order and reserve
+    int reserve = DEFAULT_INDEX_RESERVE;
+    this->bTree.reset(fanout, reserve);
+    
+    // Insert into B+Tree and set bucket ranges
+    this->bucketRanges.resize(this->blocksInBuckets.size());
+    fill(this->bucketRanges.begin(), this->bucketRanges.end(), make_pair(INT_MAX, INT_MIN));
+
+    Cursor cursor; // avoid constructor destructor calls
+    vector<int> row;
+    for (int bucket = this->blocksInBuckets.size() - 1; bucket >= 0; bucket--) {
+        cursor = this->getCursor(bucket, 0);
+        row = cursor.getNextInBucket();
+        while (!row.empty()) {
+            this->bucketRanges[bucket].first = min(this->bucketRanges[bucket].first, row[colIndex]);
+            this->bucketRanges[bucket].second = max(this->bucketRanges[bucket].second, row[colIndex]);
+            
+            // subsequent buckets will overwrite this, that's why going in reverse order of buckets
+            this->bTree.insert(row[colIndex], bucket);
+
+            row = cursor.getNextInBucket();
+        }
+    }
 }
