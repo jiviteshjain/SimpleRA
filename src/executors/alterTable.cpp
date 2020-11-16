@@ -74,6 +74,9 @@ void executeALTERTABLE()
     {
         vector<int> row;
         Cursor cursor;
+        table->indexed = false;
+        table->indexingStrategy = NOTHING;
+        table->indexedColumn = -1;
 
         if (!table->indexed)
         {
