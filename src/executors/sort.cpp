@@ -60,7 +60,6 @@ void executeSORT()
     resultantTable->blockCount = table->blockCount;
     resultantTable->columnCount = table->columnCount;
     resultantTable->columns = table->columns;
-    // resultantTable->valuesInColumns = table->valuesInColumns;
     resultantTable->smallestInColumns = table->smallestInColumns;
     resultantTable->largestInColumns = table->largestInColumns;
     resultantTable->maxRowsPerBlock = table->maxRowsPerBlock;
@@ -69,6 +68,7 @@ void executeSORT()
     tableCatalogue.insertTable(resultantTable);
 
     int runSize = table->maxRowsPerBlock * parsedQuery.sortBufferSize;
+    int columnIndex = table->getColumnIndex(parsedQuery.sortColumnName);
 
     vector<int> row;
     Cursor cursor;
@@ -78,13 +78,93 @@ void executeSORT()
         cursor = table->getCursor();
         row = cursor.getNext();
     }
-    else if (table->indexingStrategy == HASH)
+    else if (table->indexingStrategy == HASH || ((table->indexingStrategy == BTREE && table->indexedColumn != columnIndex)))
     {
         cursor = table->getCursor(0, 0);
         row = cursor.getNextInAllBuckets();
     }
+    else if (table->indexingStrategy == BTREE && table->indexedColumn == columnIndex)
+    {
+        Table *table = tableCatalogue.getTable(parsedQuery.sortRelationName);
+        
+        for (int i = 0; i < table->blocksInBuckets.size(); i++)
+            if (table->blocksInBuckets[i].size())
+            {
+                Table *tempTable = new Table(parsedQuery.sortResultRelationName + "_temp_" + to_string(i), table->columns);
+                tableCatalogue.insertTable(tempTable);
+                Cursor cursor = table->getCursor(i, 0);
+                vector<int> row = cursor.getNextInBucket();
+                vector<vector<int>> rows;
 
-    int columnIndex = table->getColumnIndex(parsedQuery.sortColumnName);
+                while (!row.empty())
+                {
+                    rows.push_back(row);
+                    tempTable->updateStatistics(row);
+
+                    if (rows.size() == tempTable->maxRowsPerBlock)
+                    {
+                        tempTable->rowsPerBlockCount.emplace_back(rows.size());
+                        bufferManager.writeTablePage(tempTable->tableName, tempTable->blockCount, rows, rows.size());
+                        tempTable->blockCount++;
+                        rows.clear();
+                    }
+                    row = cursor.getNextInBucket();
+                }
+
+                if (rows.size() < tempTable->maxRowsPerBlock)
+                {
+                    tempTable->rowsPerBlockCount.emplace_back(rows.size());
+                    bufferManager.writeTablePage(tempTable->tableName, tempTable->blockCount, rows, rows.size());
+                    tempTable->blockCount++;
+                    rows.clear();
+                }
+                
+                tempTable->sort(parsedQuery.sortBufferSize, parsedQuery.sortColumnName, 1.0, (parsedQuery.sortingStrategy == ASC) ? 0 : 1);
+            }
+        
+        resultantTable->blockCount = 0;
+        resultantTable->rowsPerBlockCount.clear();
+
+        vector<int>row;
+        vector<vector<int>> rows;
+        
+
+        for (int i = (parsedQuery.sortingStrategy == ASC) ? 0 : table->blocksInBuckets.size() - 1; (parsedQuery.sortingStrategy == ASC) ? i < table->blocksInBuckets.size() : i >=0; (parsedQuery.sortingStrategy == ASC) ? i++ : i--)
+            if (table->blocksInBuckets[i].size())
+            {
+                Table *tempTable = tableCatalogue.getTable(parsedQuery.sortResultRelationName + "_temp_" + to_string(i));
+                Cursor cursor = tempTable->getCursor(0, 0);
+                row = cursor.getNextInAllBuckets();
+                while (!row.empty())
+                {
+                    rows.push_back(row);
+                    if (rows.size() == resultantTable->maxRowsPerBlock)
+                    {
+                        resultantTable->rowsPerBlockCount.emplace_back(rows.size());
+                        bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
+                        resultantTable->blockCount++;
+                        rows.clear();
+                    }
+                    row = cursor.getNextInAllBuckets();
+                }
+
+                for (int i = 0; i < tempTable->blocksInBuckets.size(); i++)
+                    for (int j = 0; j < tempTable->blocksInBuckets[i].size(); j++)
+                        bufferManager.deleteHashFile(tempTable->tableName, i, j);
+                tableCatalogue.deleteTable(tempTable->tableName);
+            }
+
+        if (rows.size())
+        {
+            resultantTable->rowsPerBlockCount.emplace_back(rows.size());
+            bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
+            resultantTable->blockCount++;
+            rows.clear();
+        }
+        return;
+    }
+    
+
     int runsCount = 0;
     int zerothPassRunsCount;
     unordered_map<int, int> pagesInRun;
@@ -100,7 +180,7 @@ void executeSORT()
             rows.push_back(row);
             if (!table->indexed)
                 row = cursor.getNext();
-            else if (table->indexingStrategy == HASH)
+            else if (table->indexingStrategy == HASH || ((table->indexingStrategy == BTREE && table->indexedColumn != columnIndex)))
                 row = cursor.getNextInAllBuckets();
 
             rowsRead++;
