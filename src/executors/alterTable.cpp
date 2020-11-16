@@ -67,6 +67,7 @@ void executeALTERTABLE()
     }
 
     Table *newTable = new Table(parsedQuery.alterTableRelationName + "_altertemp", columns);
+    newTable->blockCount = 0;
 
     if (!table->indexed || (table->indexingStrategy == HASH && table->indexedColumn == columnIndex))
     {
@@ -83,7 +84,6 @@ void executeALTERTABLE()
             cursor = table->getCursor(0, 0);
             row = cursor.getNextInAllBuckets();
         }
-
         vector<vector<int>> rows;
         while (!row.empty())
         {
@@ -122,8 +122,8 @@ void executeALTERTABLE()
     {
         newTable->indexed = true;
         newTable->indexedColumn = table->indexedColumn;
-        newTable->blockCount = table->blockCount;
         newTable->indexingStrategy = HASH;
+        newTable->initialBucketCount = table->initialBucketCount;
         newTable->M = table->M;
         newTable->N = table->N;
         newTable->blocksInBuckets = vector<vector<int>>(table->blocksInBuckets.size());
@@ -149,6 +149,7 @@ void executeALTERTABLE()
                     {
                         newTable->blocksInBuckets[bucket].emplace_back(rows.size());
                         bufferManager.writeHashPage(newTable->tableName, bucket, chainCount++, rows);
+                        newTable->blockCount++;
                         rows.clear();
                     }
 
@@ -159,6 +160,7 @@ void executeALTERTABLE()
                 {
                     newTable->blocksInBuckets[bucket].emplace_back(rows.size());
                     bufferManager.writeHashPage(newTable->tableName, bucket, chainCount++, rows);
+                    newTable->blockCount++;
                     rows.clear();
                 }
             }
