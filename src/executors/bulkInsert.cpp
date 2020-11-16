@@ -136,7 +136,7 @@ void executeBULKINSERT()
             pageCounter = 0;
         }
     }
-    else if (table->indexingStrategy == HASH)
+    else if (table->indexingStrategy == HASH || table->indexingStrategy == BTREE)
     {
         while (getline(fin, line))
         {
