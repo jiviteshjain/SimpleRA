@@ -111,7 +111,7 @@ void executeSORT()
                     row = cursor.getNextInBucket();
                 }
 
-                if (rows.size() < tempTable->maxRowsPerBlock)
+                if (rows.size())
                 {
                     tempTable->rowsPerBlockCount.emplace_back(rows.size());
                     bufferManager.writeTablePage(tempTable->tableName, tempTable->blockCount, rows, rows.size());
