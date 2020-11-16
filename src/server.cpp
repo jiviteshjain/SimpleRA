@@ -4,7 +4,7 @@
 using namespace std;
 
 float BLOCK_SIZE = 8;
-uint BLOCK_COUNT = 16;
+uint BLOCK_COUNT = 10;
 uint PRINT_COUNT = 20;
 Logger logger;
 vector<string> tokenizedQuery;
