@@ -84,7 +84,7 @@ void executeCROSS()
         cursor1 = table1->getCursor();
         row1 = cursor1.getNext();
     }
-    else if (table1->indexingStrategy == HASH)
+    else if (table1->indexingStrategy == HASH || table1->indexingStrategy == BTREE)
     {
         cursor1 = table1->getCursor(0, 0);
         row1 = cursor1.getNextInAllBuckets();
@@ -102,7 +102,7 @@ void executeCROSS()
             cursor2 = table2->getCursor();
             row2 = cursor2.getNext();
         }
-        else if (table2->indexingStrategy == HASH)
+        else if (table2->indexingStrategy == HASH || table2->indexingStrategy == BTREE)
         {
             cursor2 = table2->getCursor(0, 0);
             row2 = cursor2.getNextInAllBuckets();
@@ -115,13 +115,13 @@ void executeCROSS()
             resultantTable->writeRow<int>(resultantRow);
             if (!table2->indexed)
                 row2 = cursor2.getNext();
-            else if (table2->indexingStrategy == HASH)
+            else if (table2->indexingStrategy == HASH || table2->indexingStrategy == BTREE)
                 row2 = cursor2.getNextInAllBuckets();
         }
 
         if (!table1->indexed)
             row1 = cursor1.getNext();
-        else if (table1->indexingStrategy == HASH)
+        else if (table1->indexingStrategy == HASH || table1->indexingStrategy == BTREE)
             row1 = cursor1.getNextInAllBuckets();
     }
     resultantTable->blockify();

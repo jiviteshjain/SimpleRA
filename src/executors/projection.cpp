@@ -67,7 +67,7 @@ void executePROJECTION()
         cursor = table->getCursor();
         row = cursor.getNext();
     }
-    else if (table->indexingStrategy == HASH)
+    else if (table->indexingStrategy == HASH || table->indexingStrategy == BTREE)
     {
         cursor = table->getCursor(0, 0);
         row = cursor.getNextInAllBuckets();
@@ -84,7 +84,7 @@ void executePROJECTION()
         resultantTable->writeRow<int>(resultantRow);
         if (!table->indexed)
             row = cursor.getNext();
-        else if (table->indexingStrategy == HASH)
+        else if (table->indexingStrategy == HASH || table->indexingStrategy == BTREE)
             row = cursor.getNextInAllBuckets();
     }
     resultantTable->blockify();

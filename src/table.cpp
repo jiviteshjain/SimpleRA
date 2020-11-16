@@ -236,8 +236,8 @@ void Table::print() {
             row = cursor.getNext();
             this->writeRow(row, cout);
         }
-    } else if (this->indexingStrategy == HASH) {
-        Cursor cursor =this->getCursor(0, 0);
+    } else if (this->indexingStrategy == HASH || this->indexingStrategy == BTREE) {
+        Cursor cursor = this->getCursor(0, 0);
         vector<int> row;
         for (int i = 0; i < count; i++) {
             row = cursor.getNextInAllBuckets();
@@ -326,14 +326,14 @@ void Table::makePermanent() {
 
     if (!this->indexed)
         cursor = this->getCursor();
-    else if (this->indexingStrategy == HASH)
+    else if (this->indexingStrategy == HASH || this->indexingStrategy == BTREE)
         cursor = this->getCursor(0, 0);
         
     vector<int> row;
     for (int rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
         if (!this->indexed)
             row = cursor.getNext();
-        else if (this->indexingStrategy == HASH)
+        else if (this->indexingStrategy == HASH || this->indexingStrategy == BTREE)
             row = cursor.getNextInAllBuckets();
         this->writeRow(row, fout);
     }
@@ -365,7 +365,7 @@ void Table::unload() {
             bufferManager.deleteTableFile(this->tableName, pageCounter);
         if (!isPermanent())
             bufferManager.deleteFile(this->sourceFileName);
-    } else if (this->indexingStrategy == HASH) {
+    } else if (this->indexingStrategy == HASH || this->indexingStrategy == BTREE) {
         for (int i = 0; i < this->blocksInBuckets.size(); i++) { // not necessarily this->M
             for (int j = 0; j < this->blocksInBuckets[i].size(); j++) {
                 bufferManager.deleteHashFile(this->tableName, i, j);
@@ -1398,7 +1398,6 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
 // B+TREE INDEXING
 
 void Table::bTreeIndex(const string& columnName, int fanout) {
-    
     int colIndex = this->getColumnIndex(columnName);
     this->clearIndex();
 
