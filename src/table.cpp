@@ -439,6 +439,8 @@ int Table::hash(int key) {
 void Table::linearHash(const string& columnName, int bucketCount) {
     logger.log("Table::linearHash");
     
+    this->clearIndex();
+
     if (this->rowCount == 0) {
         return;
     }
