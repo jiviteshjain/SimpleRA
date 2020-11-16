@@ -121,6 +121,8 @@ void executeALTERTABLE()
     else if (table->indexingStrategy == HASH)
     {
         newTable->indexed = true;
+        newTable->indexedColumn = table->indexedColumn;
+        newTable->blockCount = table->blockCount;
         newTable->indexingStrategy = HASH;
         newTable->M = table->M;
         newTable->N = table->N;
@@ -169,16 +171,28 @@ void executeALTERTABLE()
         string tableName = table->tableName;
         tableCatalogue.deleteTable(table->tableName);
         vector<vector<int>> rows;
-        for (int i = 0; i < newTable->blockCount; i++)
+        if (!newTable->indexed || (newTable->indexingStrategy == HASH && newTable->indexedColumn == columnIndex))
         {
-            rows = bufferManager.getTablePage(newTable->tableName, i).data;
-            bufferManager.deleteTableFile(newTable->tableName, i);
-            // rows.resize(newTable->rowsPerBlockCount[i]);
-            bufferManager.writeTablePage(tableName, i, rows, rows.size());
+            for (int i = 0; i < newTable->blockCount; i++)
+            {
+                rows = bufferManager.getTablePage(newTable->tableName, i).data;
+                bufferManager.deleteTableFile(newTable->tableName, i);
+                // rows.resize(newTable->rowsPerBlockCount[i]);
+                bufferManager.writeTablePage(tableName, i, rows, rows.size());
+            }
         }
-
+        else if (newTable->indexingStrategy == HASH)
+        {
+            for (int i = 0; i < newTable->blocksInBuckets.size(); i++)
+                for (int j = 0; j < newTable->blocksInBuckets[i].size(); j++)
+                {
+                    rows = bufferManager.getHashPage(newTable->tableName, i, j).data;
+                    bufferManager.deleteHashFile(newTable->tableName, i, j);
+                    bufferManager.writeHashPage(tableName, i, j, rows);
+                }
+        }
+        
         newTable->tableName = tableName;
-
         tableCatalogue.insertTable(newTable);
     }
     else
