@@ -229,7 +229,14 @@ void BufferManager::deleteTableFile(string tableName, int pageIndex) {
     this->pop(fileName);
     this->deleteFile(fileName);
 }
-
+/**
+ * @brief Overloaded function that calls deleteFile(fileName) by constructing
+ * the fileName from the matrixName and rowIndex and colIndex.
+ *
+ * @param matrixName 
+ * @param rowIndex 
+ * @param colIndex
+ */
 void BufferManager::deleteMatrixFile(const string& matrixName, int rowIndex, int colIndex) {
     logger.log("BufferManager::deleteMatrixFile");
 
@@ -237,7 +244,14 @@ void BufferManager::deleteMatrixFile(const string& matrixName, int rowIndex, int
     this->pop(fileName);
     this->deleteFile(fileName);
 }
-
+/**
+ * @brief Overloaded function that calls deleteFile(fileName) by constructing
+ * the fileName from the tableName and bucket and chainCount.
+ *
+ * @param tableName 
+ * @param bucket
+ * @param chainCount 
+ */
 void BufferManager::deleteHashFile(const string& tableName, int bucket, int chainCount) {
     logger.log("BufferManager::deleteHashFile");
 
@@ -245,7 +259,12 @@ void BufferManager::deleteHashFile(const string& tableName, int bucket, int chai
     this->pop(fileName);
     this->deleteFile(fileName);
 }
-
+/**
+ * @brief Pushes the page into bufferManager
+ *
+ * @param page 
+ * @param deferWrite 
+ */
 void BufferManager::push(Pages page, bool deferWrite) {
     if (!deferWrite) {
         writePage(page);  // write current page instantly if not deferred
@@ -270,7 +289,12 @@ void BufferManager::push(Pages page, bool deferWrite) {
     // insert this page
     this->pages.emplace_back(page);
 }
-
+/**
+ * @brief Pops the page from bufferManager
+ *
+ * @param page 
+ * @param deferWrite 
+ */
 void BufferManager::pop(const string& fileName) {
     // DOES NOT WRITEBACK
     

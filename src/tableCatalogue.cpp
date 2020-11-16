@@ -12,6 +12,15 @@ void TableCatalogue::deleteTable(string tableName)
     delete this->tables[tableName];
     this->tables.erase(tableName);
 }
+/**
+ * @brief Replaces tablename in the catalogue
+ * 
+ * @param oldTableName
+ * 
+ * @param newTableName
+ * 
+ * @return 
+ */
 void TableCatalogue::replaceTableName(string oldTableName, string newTableName)
 {
     logger.log("TableCatalogue::replaceTableName"); 

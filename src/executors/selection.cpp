@@ -102,7 +102,17 @@ bool evaluateBinOp(int value1, int value2, BinaryOperator binaryOperator)
         return false;
     }
 }
-
+/**
+ * @brief Checks the bucket for rows that satisfy the condition
+ * 
+ * @param table
+ * 
+ * @param resultantTable
+ * 
+ * @param bucket
+ * 
+ * @return 
+ */
 void retrieveResult(Table *table, Table *resultantTable, int bucket)
 {
     Cursor cursor = table->getCursor(bucket, 0);
@@ -175,6 +185,13 @@ void retrieveResult(Table *table, Table *resultantTable, int bucket)
     }
 }
 
+/**
+ * @brief Saves the final result to tableCatalogue
+ * 
+ * @param resultantTable
+ * 
+ * @return 
+ */
 void saveResult(Table *resultantTable)
 {
     if (resultantTable->rowCount)

@@ -1,5 +1,14 @@
 #include "global.h"
 
+/**
+ * @brief Comparator for binary search
+ * 
+ * @param left
+ * 
+ * @param right
+ * 
+ * @return bool 
+ */
 bool secondLessThan(const pair<int, int> &left, int right) {
     return left.second < right;
 }
@@ -47,6 +56,15 @@ Table::Table(string tableName, vector<string> columns) {
     // this->writeRow<string>(columns);
 }
 
+/**
+ * @brief Calculates density of linear hash blocks
+ * 
+ * @param offsetRows
+ * 
+ * @param offsetBlocks
+ * 
+ * @return density
+ */
 inline float Table::density(int offsetRows, int offsetBlocks) {
     return ((float)(this->rowCount + offsetRows)) / ((this->blockCount + offsetBlocks) * this->maxRowsPerBlock);
 }
@@ -617,6 +635,13 @@ bool Table::insert(const vector<int> &row) {
     return true;
 }
 
+/**
+ * @brief Splits the blocks of linearly hashed table on overflow
+ * 
+ * @param 
+ * 
+ * @return 
+ */
 void Table::linearHashSplit() {
     logger.log("Table::linearHashSplit");
     this->blocksInBuckets.push_back(vector<int>(0));  // M + N
@@ -667,6 +692,13 @@ void Table::linearHashSplit() {
     }
 }
 
+/**
+ * @brief Removes zero sized buckets
+ * 
+ * @param 
+ * 
+ * @return 
+ */
 void Table::cleanupBlocks(int bucket) {
     logger.log("Table::cleanupBlocks");
     if (this->blocksInBuckets[bucket].size() == 0) {
@@ -773,6 +805,13 @@ void Table::clearIndex() {
     return;
 }
 
+/**
+ * @brief Removes zero sized buckets
+ * 
+ * @param bucket
+ * 
+ * @return 
+ */
 void Table::mergeBlocks(int bucket) {
     logger.log("Table::mergeBlocks");
     bool foundAndFixed;
@@ -1069,6 +1108,13 @@ bool Table::remove(const vector<int> &row) {
     return (foundCount != 0);
 }
 
+/**
+ * @brief Merges buckets if their combined capacity fits in a block (underflow)
+ * 
+ * @param 
+ * 
+ * @return 
+ */
 void Table::linearHashCombine() {
     logger.log("Table::linearHashCombine");
     // can't combine further, M could be odd
@@ -1108,6 +1154,19 @@ void Table::linearHashCombine() {
     }
 }
 
+/**
+ * @brief Sorts a table in-place, used for B+-tree
+ * 
+ * @param bufferSize
+ * 
+ * @param columnName
+ * 
+ * @param capacity
+ * 
+ * @param sortingStrategy
+ * 
+ * @return 
+ */
 void Table::sort(int bufferSize, string columnName, float capacity, int sortingStrategy) {
     logger.log("Table::sort");
     int runSize = this->maxRowsPerBlock * bufferSize;
@@ -1323,7 +1382,15 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
 }
 
 // B+TREE INDEXING
-
+/**
+ * @brief Indexes a table using B+-tree
+ * 
+ * @param columnName
+ * 
+ * @param fanout
+ * 
+ * @return 
+ */
 void Table::bTreeIndex(const string &columnName, int fanout) {
     logger.log("Table::bTreeIndex");
     int colIndex = this->getColumnIndex(columnName);
