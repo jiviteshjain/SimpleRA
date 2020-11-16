@@ -1113,6 +1113,9 @@ bool Table::remove(const vector<int>& row) {
         }
     }
 
+    if (this->rowCount == 0)
+        tableCatalogue.deleteTable(this->tableName);
+    
     return (foundCount != 0);
 }
 
