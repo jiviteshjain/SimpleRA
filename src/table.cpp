@@ -1,6 +1,6 @@
 #include "global.h"
 
-bool secondLessThan(const pair<int, int>& left, int right) {
+bool secondLessThan(const pair<int, int> &left, int right) {
     return left.second < right;
 }
 
@@ -41,14 +41,14 @@ Table::Table(string tableName, vector<string> columns) {
     this->columnCount = columns.size();
     this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (sizeof(int) * columnCount));
     // this->valuesInColumns = vector<map<int, long long>> (this->columnCount);
-    this->smallestInColumns = vector<int> (this->columnCount);
-    this->largestInColumns = vector<int> (this->columnCount);
+    this->smallestInColumns = vector<int>(this->columnCount);
+    this->largestInColumns = vector<int>(this->columnCount);
     // this->maxRowsPerBlock = 3; // DEBUG
     // this->writeRow<string>(columns);
 }
 
 inline float Table::density(int offsetRows, int offsetBlocks) {
-    return ((float)(this->rowCount + offsetRows))/((this->blockCount + offsetBlocks) * this->maxRowsPerBlock);
+    return ((float)(this->rowCount + offsetRows)) / ((this->blockCount + offsetBlocks) * this->maxRowsPerBlock);
 }
 
 /**
@@ -115,8 +115,8 @@ bool Table::blockify() {
     vector<vector<int>> rowsInPage(this->maxRowsPerBlock, row);
     int pageCounter = 0;
     // this->valuesInColumns = vector<map<int, long long>> (this->columnCount);
-    this->smallestInColumns = vector<int> (this->columnCount);
-    this->largestInColumns = vector<int> (this->columnCount);
+    this->smallestInColumns = vector<int>(this->columnCount);
+    this->largestInColumns = vector<int>(this->columnCount);
     getline(fin, line);
     while (getline(fin, line)) {
         stringstream s(line);
@@ -157,6 +157,7 @@ bool Table::blockify() {
  * @param row 
  */
 void Table::updateStatistics(vector<int> row) {
+    logger.log("Table::updateStatistics");
     this->rowCount++;
     for (int columnCounter = 0; columnCounter < this->columnCount; columnCounter++) {
         // this->valuesInColumns[columnCounter][row[columnCounter]]++;
@@ -287,22 +288,19 @@ void Table::getNextPage(Cursor *cursor, int chainCount) {
  * @param cursor 
  * @return void 
  */
-void Table::getNextPage(Cursor *cursor, int bucket, int chainCount)
-{
+void Table::getNextPage(Cursor *cursor, int bucket, int chainCount) {
     logger.log("Table::getNextPage");
 
     if (cursor->chainCount < this->blocksInBuckets[cursor->bucket].size() - 1)
         cursor->nextPage(cursor->bucket, cursor->chainCount + 1);
-    else
-    {
+    else {
         int bucket = -1;
         for (int i = cursor->bucket + 1; i < this->blocksInBuckets.size(); i++)
-            if (this->blocksInBuckets[i].size())
-            {
+            if (this->blocksInBuckets[i].size()) {
                 bucket = i;
                 break;
             }
-        
+
         if (bucket != -1)
             cursor->nextPage(bucket, 0);
     }
@@ -328,7 +326,7 @@ void Table::makePermanent() {
         cursor = this->getCursor();
     else if (this->indexingStrategy == HASH || this->indexingStrategy == BTREE)
         cursor = this->getCursor(0, 0);
-        
+
     vector<int> row;
     for (long long rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
         if (!this->indexed)
@@ -366,7 +364,7 @@ void Table::unload() {
         if (!isPermanent())
             bufferManager.deleteFile(this->sourceFileName);
     } else if (this->indexingStrategy == HASH || this->indexingStrategy == BTREE) {
-        for (int i = 0; i < this->blocksInBuckets.size(); i++) { // not necessarily this->M
+        for (int i = 0; i < this->blocksInBuckets.size(); i++) {  // not necessarily this->M
             for (int j = 0; j < this->blocksInBuckets[i].size(); j++) {
                 bufferManager.deleteHashFile(this->tableName, i, j);
             }
@@ -427,7 +425,6 @@ int Table::hash(int key) {
     return (first < this->N ? MOD(key, 2 * M) : first);
 }
 
-
 /**
  * @brief Function that creates a linear hash index on the table
  * 
@@ -436,9 +433,9 @@ int Table::hash(int key) {
  * 
  * @return void
  */
-void Table::linearHash(const string& columnName, int bucketCount) {
+void Table::linearHash(const string &columnName, int bucketCount) {
     logger.log("Table::linearHash");
-    
+
     this->clearIndex();
 
     if (this->rowCount == 0) {
@@ -453,10 +450,10 @@ void Table::linearHash(const string& columnName, int bucketCount) {
 
     this->M = bucketCount;
     this->initialBucketCount = bucketCount;
-    this->blocksInBuckets = vector<vector<int>> (this->M);
+    this->blocksInBuckets = vector<vector<int>>(this->M);
 
     int col = this->indexedColumn;
-    Cursor cursor (this->tableName, 0);
+    Cursor cursor(this->tableName, 0);
 
     vector<int> row;
     for (long long i = 0; i < this->rowCount; i++) {
@@ -477,7 +474,7 @@ void Table::linearHash(const string& columnName, int bucketCount) {
     for (auto &b : this->blocksInBuckets) {
         this->blockCount += b.size();
     }
-    this->rowsPerBlockCount.clear(); // this doesn't hold any meaning anymore
+    this->rowsPerBlockCount.clear();  // this doesn't hold any meaning anymore
 }
 
 /**
@@ -489,14 +486,15 @@ void Table::linearHash(const string& columnName, int bucketCount) {
  * @return bool indicating an overflow
  */
 
-bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
+bool Table::insertIntoHashBucket(const vector<int> &row, int bucket) {
+    logger.log("Table::insertIntoHashBucket");
     if (bucket >= this->blocksInBuckets.size()) {
         return false;  // TODO: raise an error somehow
     }
 
     bool found = false;
-    
-    vector<vector<int>> rows (0);
+
+    vector<vector<int>> rows(0);
     int chainCount;
 
     for (chainCount = 0; chainCount < this->blocksInBuckets[bucket].size(); chainCount++) {
@@ -521,34 +519,6 @@ bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
     return !found;
 }
 
-// bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
-//     if (bucket >= this->blocksInBuckets.size()) {
-//         return false; // TODO: raise an error somehow
-//}
-
-//     bool newPage = false;
-//     vector<vector<int>> rows (0);
-
-//     if (!this->blocksInBuckets[bucket].empty() && this->blocksInBuckets[bucket].back() < this->maxRowsPerBlock) {
-//         // Fit in the last block
-        
-//         rows = bufferManager.getHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1).data;
-//         // TODO: Exception handling, page not found
-
-//         this->blocksInBuckets[bucket].back() = this->blocksInBuckets[bucket].back() + 1;
-
-//     } else {
-//         // allocate a new block
-
-//         this->blocksInBuckets[bucket].push_back(1);
-//         newPage = true;
-//     }
-
-//     rows.push_back(row);
-//     bufferManager.writeHashPage(this->tableName, bucket, this->blocksInBuckets[bucket].size() - 1, rows);
-//     return newPage;
-// }
-
 /**
  * @brief Inserts a row into the table
  * 
@@ -557,7 +527,8 @@ bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
  * 
  * @return void
  */
-bool Table::insert(const vector<int>& row) {
+bool Table::insert(const vector<int> &row) {
+    logger.log("Table::insert");
     if (row.size() != this->columnCount) {
         return false;
     }
@@ -565,10 +536,8 @@ bool Table::insert(const vector<int>& row) {
     if (this->indexingStrategy == NOTHING) {
         vector<vector<int>> rows;
         int blockIndex;
-        for (blockIndex = 0; blockIndex < this->blockCount; blockIndex++)
-        {
-            if (this->rowsPerBlockCount[blockIndex] != this->maxRowsPerBlock)
-            {
+        for (blockIndex = 0; blockIndex < this->blockCount; blockIndex++) {
+            if (this->rowsPerBlockCount[blockIndex] != this->maxRowsPerBlock) {
                 rows = bufferManager.getTablePage(this->tableName, blockIndex).data;
                 // rows.resize(this->rowsPerBlockCount[blockIndex]);
                 rows.push_back(row);
@@ -579,14 +548,13 @@ bool Table::insert(const vector<int>& row) {
             }
         }
 
-        if (blockIndex == this->blockCount)
-        {
+        if (blockIndex == this->blockCount) {
             rows.push_back(row);
             bufferManager.writeTablePage(this->tableName, this->blockCount, rows, rows.size());
             this->blockCount++;
             this->rowsPerBlockCount.emplace_back(rows.size());
         }
-        
+
     } else if (this->indexingStrategy == HASH) {
         int bucket = this->hash(row[this->indexedColumn]);
         // because row is large enough, this is always in bounds
@@ -600,9 +568,9 @@ bool Table::insert(const vector<int>& row) {
         }
 
     } else if (this->indexingStrategy == BTREE) {
-        int key = row[this->indexedColumn]; // always in bounds
+        int key = row[this->indexedColumn];  // always in bounds
         auto record = this->bTree.find(key, nullptr);
-        
+
         bool overflow;
         int bucket;
         if (record != nullptr) {
@@ -640,7 +608,6 @@ bool Table::insert(const vector<int>& row) {
                 this->clearIndex();
                 this->bTreeIndex(this->columns[colIndex], fanout);
             }
-            
         }
     }
 
@@ -651,8 +618,9 @@ bool Table::insert(const vector<int>& row) {
 }
 
 void Table::linearHashSplit() {
-    this->blocksInBuckets.push_back(vector<int> (0)); // M + N
-    this->blocksInBuckets.push_back(vector<int>(0)); // M + N + 1 (temporary)
+    logger.log("Table::linearHashSplit");
+    this->blocksInBuckets.push_back(vector<int>(0));  // M + N
+    this->blocksInBuckets.push_back(vector<int>(0));  // M + N + 1 (temporary)
 
     // rehash
     Cursor cursor = this->getCursor(this->N, 0);
@@ -686,7 +654,7 @@ void Table::linearHashSplit() {
     // fix metadata
     this->blocksInBuckets[this->N] = this->blocksInBuckets.back();
     this->blocksInBuckets.pop_back();
-    
+
     this->blockCount = 0;
     for (auto &b : this->blocksInBuckets) {
         this->blockCount += b.size();
@@ -697,10 +665,10 @@ void Table::linearHashSplit() {
         this->M = this->M * 2;
         this->N = 0;
     }
-
 }
 
 void Table::cleanupBlocks(int bucket) {
+    logger.log("Table::cleanupBlocks");
     if (this->blocksInBuckets[bucket].size() == 0) {
         return;
     }
@@ -735,7 +703,7 @@ void Table::cleanupBlocks(int bucket) {
     }
 
     this->blockCount = 0;
-    for (auto &b: this->blocksInBuckets) {
+    for (auto &b : this->blocksInBuckets) {
         this->blockCount += b.size();
     }
 }
@@ -747,8 +715,8 @@ void Table::cleanupBlocks(int bucket) {
  * 
  * @return 
  */
-void Table::clearIndex()
-{
+void Table::clearIndex() {
+    logger.log("Table::clearIndex");
     if (!this->indexed)
         return;
 
@@ -757,29 +725,26 @@ void Table::clearIndex()
     int blocksWritten = 0;
     this->rowsPerBlockCount.clear();
     this->rowCount = 0;
-    
+
     Cursor cursor = this->getCursor(0, 0);
     vector<int> row = cursor.getNextInAllBuckets();
     vector<vector<int>> rows;
-    
+
     fill(this->smallestInColumns.begin(), this->smallestInColumns.end(), INT_MAX);
     fill(this->largestInColumns.begin(), this->largestInColumns.end(), INT_MIN);
 
-    while (!row.empty())
-    {
+    while (!row.empty()) {
         rows.push_back(row);
         this->updateStatistics(row);
         row = cursor.getNextInAllBuckets();
-        if (rows.size() == this->maxRowsPerBlock)
-        {
+        if (rows.size() == this->maxRowsPerBlock) {
             this->rowsPerBlockCount.emplace_back(rows.size());
             bufferManager.writeTablePage(this->tableName, blocksWritten++, rows, rows.size());
             rows.clear();
         }
     }
 
-    if (rows.size())
-    {
+    if (rows.size()) {
         this->rowsPerBlockCount.emplace_back(rows.size());
         bufferManager.writeTablePage(this->tableName, blocksWritten++, rows, rows.size());
         rows.clear();
@@ -798,7 +763,7 @@ void Table::clearIndex()
         this->bTree.destroy_tree();
         this->bucketRanges.clear();
     }
-    
+
     this->blockCount = blocksWritten;
 
     this->indexed = false;
@@ -809,7 +774,7 @@ void Table::clearIndex()
 }
 
 void Table::mergeBlocks(int bucket) {
-    
+    logger.log("Table::mergeBlocks");
     bool foundAndFixed;
     do {
         foundAndFixed = false;
@@ -856,7 +821,8 @@ void Table::mergeBlocks(int bucket) {
  * 
  * @return bool true if the row was deleted
  */
-bool Table::remove(const vector<int>& row) {
+bool Table::remove(const vector<int> &row) {
+    logger.log("Table::remove");
     // invalid row
     if (row.size() != this->columnCount) {
         return false;
@@ -865,34 +831,29 @@ bool Table::remove(const vector<int>& row) {
     for (int i = 0; i < this->columnCount; i++)
         if (this->smallestInColumns[i] > row[i] || this->largestInColumns[i] < row[i])
             return false;
-    
+
     long long foundCount = 0;
-    
+
     if (this->indexingStrategy == NOTHING) {
         vector<vector<int>> data;
         vector<vector<int>>::iterator it;
         int pageIndex;
 
-        for (int pageIndex = 0; pageIndex < this->blockCount; pageIndex++)
-        {
+        for (int pageIndex = 0; pageIndex < this->blockCount; pageIndex++) {
             long long foundInPage = 0;
 
             data = bufferManager.getTablePage(this->tableName, pageIndex).data;
             it = data.begin();
 
-            while (it != data.end())
-            {
-                if (*it == row)
-                {
+            while (it != data.end()) {
+                if (*it == row) {
                     it = data.erase(it);
                     foundInPage++;
-                }
-                else
+                } else
                     it++;
             }
 
-            if (foundInPage > 0)
-            {
+            if (foundInPage > 0) {
                 this->rowsPerBlockCount[pageIndex] = data.size();
 
                 if (data.size() == 0)
@@ -903,19 +864,15 @@ bool Table::remove(const vector<int>& row) {
                 foundCount = foundCount + foundInPage;
             }
         }
-        if (foundCount)
-        {
+        if (foundCount) {
             bool foundAndFixed;
-            do
-            {
+            do {
                 foundAndFixed = false;
-                for (int i = 0; i < this->blockCount; i++)
-                {
+                for (int i = 0; i < this->blockCount; i++) {
                     if (this->rowsPerBlockCount[i] == this->maxRowsPerBlock || this->rowsPerBlockCount[i] == 0)
                         continue;
 
-                    for (int j = i + 1; j < this->blockCount; j++)
-                    {
+                    for (int j = i + 1; j < this->blockCount; j++) {
                         if (this->rowsPerBlockCount[i] + this->rowsPerBlockCount[j] > this->maxRowsPerBlock || this->rowsPerBlockCount[j] == 0)
                             continue;
 
@@ -937,21 +894,17 @@ bool Table::remove(const vector<int>& row) {
                 }
             } while (foundAndFixed);
 
-            while (this->blockCount > 0)
-            {
-                if (this->rowsPerBlockCount[blockCount - 1] == 0)
-                {
+            while (this->blockCount > 0) {
+                if (this->rowsPerBlockCount[blockCount - 1] == 0) {
                     bufferManager.deleteTableFile(this->tableName, this->blockCount - 1);
                     this->blockCount--;
-                }
-                else
+                } else
                     break;
             }
 
-            for (int i = 0; i < this->blockCount - 1; i++) // remove 0 size blocks
+            for (int i = 0; i < this->blockCount - 1; i++)  // remove 0 size blocks
             {
-                if (this->rowsPerBlockCount[i] == 0)
-                {
+                if (this->rowsPerBlockCount[i] == 0) {
                     vector<vector<int>> finalBlockRows = bufferManager.getTablePage(this->tableName, this->blockCount - 1).data;
                     bufferManager.deleteTableFile(this->tableName, this->blockCount - 1);
                     bufferManager.writeTablePage(this->tableName, i, finalBlockRows, finalBlockRows.size());
@@ -964,22 +917,20 @@ bool Table::remove(const vector<int>& row) {
         this->rowCount = this->rowCount - foundCount;
 
     } else if (this->indexingStrategy == HASH) {
-
         // check corresponding bucket
         // does not use cursor because have to modify page if row was actually found
         int bucket = this->hash(row[this->indexedColumn]);
-        
+
         // to avoid repeated constructor and destructor calls
         vector<vector<int>> data;
         vector<vector<int>>::iterator it;
 
         for (int i = 0; i < this->blocksInBuckets[bucket].size(); i++) {
-            
             long long foundInPage = 0;
-            
+
             data = bufferManager.getHashPage(this->tableName, bucket, i).data;
             it = data.begin();
-            
+
             while (it != data.end()) {
                 if (*it == row) {
                     it = data.erase(it);
@@ -988,7 +939,6 @@ bool Table::remove(const vector<int>& row) {
                     it++;
                 }
             }
-
 
             if (foundInPage > 0) {
                 this->blocksInBuckets[bucket][i] = data.size();
@@ -1001,16 +951,13 @@ bool Table::remove(const vector<int>& row) {
 
                 foundCount = foundCount + foundInPage;
             }
-
         }
 
         if (foundCount > 0) {
-            
             this->rowCount = this->rowCount - foundCount;
 
             // clean up pages of size 0
-            this->cleanupBlocks(bucket); // not doing merge blocks to let underflow do it
-
+            this->cleanupBlocks(bucket);  // not doing merge blocks to let underflow do it
 
             // combine only on underflow
             if (this->density() < HASH_DENSITY_MIN) {
@@ -1018,12 +965,12 @@ bool Table::remove(const vector<int>& row) {
             }
         }
 
-    } else { // B+Tree
+    } else {  // B+Tree
 
         // check corresponding bucket
         // does not use cursor because have to modify page if row was actually found
         int key = row[this->indexedColumn];
-        auto record = this->bTree.find(key, nullptr); // not out of range
+        auto record = this->bTree.find(key, nullptr);  // not out of range
         if (record == nullptr) {
             return false;
         }
@@ -1036,15 +983,15 @@ bool Table::remove(const vector<int>& row) {
                 break;
             }
         }
-        this->bTree.del(key); // will be inserted later if reqd
+        this->bTree.del(key);  // will be inserted later if reqd
         // donot use record after this
 
         for (int bucket = bucket_f - 1; bucket >= bucket_i; bucket--) {
             long long foundInBucketCount = 0;
 
             int minn = INT_MAX, maxx = INT_MIN;
-            bool anotherOneExists = false; // same key different row exists
-            bool somethingElseExists = false; // the bucket is not empty after deletion
+            bool anotherOneExists = false;     // same key different row exists
+            bool somethingElseExists = false;  // the bucket is not empty after deletion
 
             vector<vector<int>> data;
             vector<vector<int>>::iterator it;
@@ -1077,7 +1024,7 @@ bool Table::remove(const vector<int>& row) {
                         bufferManager.deleteHashFile(this->tableName, bucket, i);
                     }
 
-                    foundInBucketCount= foundInBucketCount + foundInPage;
+                    foundInBucketCount = foundInBucketCount + foundInPage;
                 }
             }
 
@@ -1087,7 +1034,7 @@ bool Table::remove(const vector<int>& row) {
 
             if (foundInBucketCount > 0) {
                 this->rowCount = this->rowCount - foundInBucketCount;
-                
+
                 if (somethingElseExists) {
                     this->bucketRanges[bucket] = make_pair(minn, maxx);
                 }
@@ -1097,13 +1044,12 @@ bool Table::remove(const vector<int>& row) {
                 // }
 
                 // merge blocks that can be merged
-                this->mergeBlocks(bucket); 
-                
+                this->mergeBlocks(bucket);
+
                 // clean up pages of size 0
                 this->cleanupBlocks(bucket);
 
                 foundCount += foundInBucketCount;
-
             }
         }
 
@@ -1119,12 +1065,12 @@ bool Table::remove(const vector<int>& row) {
 
     if (this->rowCount == 0)
         tableCatalogue.deleteTable(this->tableName);
-    
+
     return (foundCount != 0);
 }
 
 void Table::linearHashCombine() {
-    
+    logger.log("Table::linearHashCombine");
     // can't combine further, M could be odd
     if (this->M == this->initialBucketCount && this->N == 0) {
         return;
@@ -1154,7 +1100,7 @@ void Table::linearHashCombine() {
 
     // fix metadata
     this->N--;
-    this->blocksInBuckets.pop_back(); // has to be the last entry
+    this->blocksInBuckets.pop_back();  // has to be the last entry
 
     this->blockCount = 0;
     for (auto &b : this->blocksInBuckets) {
@@ -1162,8 +1108,8 @@ void Table::linearHashCombine() {
     }
 }
 
-void Table::sort(int bufferSize, string columnName, float capacity, int sortingStrategy)
-{
+void Table::sort(int bufferSize, string columnName, float capacity, int sortingStrategy) {
+    logger.log("Table::sort");
     int runSize = this->maxRowsPerBlock * bufferSize;
     Cursor cursor = this->getCursor();
     vector<int> row = cursor.getNext();
@@ -1183,12 +1129,10 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
     this->rowsPerBlockCount.resize(newBlockCount + 2 * originalBlockCount);
 
     int blocksWritten = 0;
-    while (!row.empty())
-    {
+    while (!row.empty()) {
         vector<vector<int>> rows;
         int rowsRead = 0;
-        while (!row.empty() && rowsRead != runSize)
-        {
+        while (!row.empty() && rowsRead != runSize) {
             rows.push_back(row);
             row = cursor.getNext();
             rowsRead++;
@@ -1204,16 +1148,12 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                       });
 
         int rowsWritten = 0;
-        while (rowsWritten < rowsRead)
-        {
+        while (rowsWritten < rowsRead) {
             vector<vector<int>> subvector;
-            if (rowsWritten + originalMaxRowsPerBlock <= rowsRead)
-            {
+            if (rowsWritten + originalMaxRowsPerBlock <= rowsRead) {
                 subvector = {rows.begin() + rowsWritten, rows.begin() + rowsWritten + originalMaxRowsPerBlock};
                 rowsWritten += originalMaxRowsPerBlock;
-            }
-            else
-            {
+            } else {
                 subvector = {rows.begin() + rowsWritten, rows.end()};
                 rowsWritten = rowsRead;
             }
@@ -1232,13 +1172,11 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
     int totalPasses = ceil(log(runsCount) / log(bufferSize - 1));
 
     int finalBlocksWritten = 0;
-    while (passCount < totalPasses)
-    {
+    while (passCount < totalPasses) {
         int runsRead = 0;
         int runsWritten = 0;
         int blocksWritten = 0;
-        while (runsRead < runsCount)
-        {
+        while (runsRead < runsCount) {
             unordered_map<int, int> pagesReadInRun;
             int minSize = min(runsCount - runsRead, bufferSize - 1);
 
@@ -1254,8 +1192,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
 
             priority_queue<pair<vector<int>, int>, vector<pair<vector<int>, int>>, function<bool(const pair<vector<int>, int> &a, const pair<vector<int>, int> &b)>> heap(comp);
 
-            for (int i = 0; i < minSize; i++)
-            {
+            for (int i = 0; i < minSize; i++) {
                 int runPageIndex = (passCount & 1 ? newBlockCount + originalBlockCount : newBlockCount);
 
                 runPageIndex += ((runsRead + i) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + i)]++);
@@ -1264,14 +1201,12 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                 heap.push(make_pair(dataFromPages[i][rowsReadFromPages[i]++], i));
             }
             vector<vector<int>> rows;
-            while (!heap.empty())
-            {
+            while (!heap.empty()) {
                 pair<vector<int>, int> temp = heap.top();
                 heap.pop();
 
                 rows.push_back(temp.first);
-                if (rows.size() == newMaxRowsPerBlock && passCount == totalPasses - 1)
-                {
+                if (rows.size() == newMaxRowsPerBlock && passCount == totalPasses - 1) {
                     this->blocksInBuckets[finalBlocksWritten].emplace_back(rows.size());
                     bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, rows);
                     // bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, rows, rows.size());
@@ -1280,8 +1215,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                     pagesInRun[(passCount + 1) * zerothPassRunsCount + runsWritten]++;
                     rows.clear();
                 }
-                if (rows.size() == originalMaxRowsPerBlock && passCount != totalPasses - 1)
-                {
+                if (rows.size() == originalMaxRowsPerBlock && passCount != totalPasses - 1) {
                     int runPageIndex = (passCount & 1 ? newBlockCount : newBlockCount + originalBlockCount);
                     runPageIndex += blocksWritten++;
 
@@ -1298,9 +1232,9 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                 runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)] - 1);
                 if (rowsReadFromPages[temp.second] != this->rowsPerBlockCount[runPageIndex])
                     heap.push(make_pair(dataFromPages[temp.second][rowsReadFromPages[temp.second]++], temp.second));
-                else //all rows exhausted
+                else  //all rows exhausted
                 {
-                    if (pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)] != pagesInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]) // all pages not exhausted
+                    if (pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)] != pagesInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)])  // all pages not exhausted
                     {
                         int runPageIndex = (passCount & 1 ? newBlockCount + originalBlockCount : newBlockCount);
                         runPageIndex += ((runsRead + temp.second) * pagesInRun[passCount * zerothPassRunsCount] + pagesReadInRun[passCount * zerothPassRunsCount + (runsRead + temp.second)]++);
@@ -1311,21 +1245,17 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                     }
                 }
             }
-            if (rows.size())
-            {
+            if (rows.size()) {
                 int runPageIndex = (passCount & 1 ? newBlockCount : newBlockCount + originalBlockCount);
 
                 runPageIndex += blocksWritten++;
 
-                if (passCount == totalPasses - 1)
-                {
+                if (passCount == totalPasses - 1) {
                     this->blocksInBuckets[finalBlocksWritten].emplace_back(rows.size());
                     bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, rows);
                     // this->rowsPerBlockCount[finalBlocksWritten] = rows.size();
                     // bufferManager.writeTablePage(this->tableName, finalBlocksWritten++, rows, rows.size());
-                }
-                else
-                {
+                } else {
                     this->rowsPerBlockCount[runPageIndex] = rows.size();
                     bufferManager.writeTablePage(this->tableName, runPageIndex, rows, rows.size());
                     this->blockCount++;
@@ -1342,29 +1272,24 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
         runsCount = ceil((float)runsCount / (bufferSize - 1));
     }
 
-    if (totalPasses == 0)
-    {
+    if (totalPasses == 0) {
         vector<vector<int>> rowsToWrite;
         vector<vector<int>> pageData;
-        for (int i = newBlockCount; i < this->blockCount; i++)
-        {
+        for (int i = newBlockCount; i < this->blockCount; i++) {
             pageData = bufferManager.getTablePage(this->tableName, i).data;
 
             int rowsWritten = 0;
 
-            if (rowsToWrite.size())
-            {
-                if (pageData.size() >= newMaxRowsPerBlock - rowsToWrite.size())
-                {
+            if (rowsToWrite.size()) {
+                if (pageData.size() >= newMaxRowsPerBlock - rowsToWrite.size()) {
                     rowsWritten = newMaxRowsPerBlock - rowsToWrite.size();
                     rowsToWrite.insert(std::end(rowsToWrite), std::begin(pageData), std::begin(pageData) + (newMaxRowsPerBlock - rowsToWrite.size()));
                     this->blocksInBuckets[finalBlocksWritten].emplace_back(rowsToWrite.size());
                     bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, rowsToWrite);
                 }
             }
-            
-            while (rowsWritten + newMaxRowsPerBlock <= pageData.size())
-            {
+
+            while (rowsWritten + newMaxRowsPerBlock <= pageData.size()) {
                 rowsToWrite = {pageData.begin() + rowsWritten, pageData.begin() + rowsWritten + newMaxRowsPerBlock};
                 rowsWritten += newMaxRowsPerBlock;
                 this->blocksInBuckets[finalBlocksWritten].emplace_back(rowsToWrite.size());
@@ -1375,12 +1300,11 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
                 rowsToWrite = {pageData.begin() + rowsWritten, pageData.end()};
             else
                 rowsToWrite.clear();
-            
+
             pageData.clear();
         }
 
-        if (rowsToWrite.size())
-        {
+        if (rowsToWrite.size()) {
             this->blocksInBuckets[finalBlocksWritten].emplace_back(rowsToWrite.size());
             bufferManager.writeHashPage(this->tableName, finalBlocksWritten++, 0, rowsToWrite);
         }
@@ -1392,7 +1316,7 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
         bufferManager.deleteTableFile(this->tableName, i);
 
     // this->maxRowsPerBlock = newMaxRowsPerBlock;
-    this->blockCount = this->blocksInBuckets.size(); //or finalBlocksWritten or newBlockCount
+    this->blockCount = this->blocksInBuckets.size();  //or finalBlocksWritten or newBlockCount
     this->rowsPerBlockCount.clear();
 
     return;
@@ -1400,7 +1324,8 @@ void Table::sort(int bufferSize, string columnName, float capacity, int sortingS
 
 // B+TREE INDEXING
 
-void Table::bTreeIndex(const string& columnName, int fanout) {
+void Table::bTreeIndex(const string &columnName, int fanout) {
+    logger.log("Table::bTreeIndex");
     int colIndex = this->getColumnIndex(columnName);
     this->clearIndex();
 
@@ -1416,12 +1341,12 @@ void Table::bTreeIndex(const string& columnName, int fanout) {
 
     // TODO: Figure out order and reserve
     this->bTree.reset(fanout, DEFAULT_INDEX_RESERVE);
-    
+
     // Insert into B+Tree and set bucket ranges
     this->bucketRanges.resize(this->blocksInBuckets.size());
     fill(this->bucketRanges.begin(), this->bucketRanges.end(), make_pair(INT_MAX, INT_MIN));
 
-    Cursor cursor; // avoid constructor destructor calls
+    Cursor cursor;  // avoid constructor destructor calls
     vector<int> row;
     for (int bucket = this->blocksInBuckets.size() - 1; bucket >= 0; bucket--) {
         cursor = this->getCursor(bucket, 0);
@@ -1429,7 +1354,7 @@ void Table::bTreeIndex(const string& columnName, int fanout) {
         while (!row.empty()) {
             this->bucketRanges[bucket].first = min(this->bucketRanges[bucket].first, row[colIndex]);
             this->bucketRanges[bucket].second = max(this->bucketRanges[bucket].second, row[colIndex]);
-            
+
             // subsequent buckets will overwrite this, that's why going in reverse order of buckets
             this->bTree.insert(row[colIndex], bucket);
 
