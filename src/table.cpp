@@ -330,7 +330,7 @@ void Table::makePermanent() {
         cursor = this->getCursor(0, 0);
         
     vector<int> row;
-    for (int rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
+    for (long long rowCounter = 0; rowCounter < this->rowCount; rowCounter++) {
         if (!this->indexed)
             row = cursor.getNext();
         else if (this->indexingStrategy == HASH || this->indexingStrategy == BTREE)
@@ -457,7 +457,7 @@ void Table::linearHash(const string& columnName, int bucketCount) {
     Cursor cursor (this->tableName, 0);
 
     vector<int> row;
-    for (int i = 0; i < this->rowCount; i++) {
+    for (long long i = 0; i < this->rowCount; i++) {
         row = cursor.getNext();
         int bucket = this->hash(row[col]);
         this->insertIntoHashBucket(row, bucket);
