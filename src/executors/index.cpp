@@ -51,6 +51,20 @@ bool semanticParseINDEX() {
         cout << "SEMANTIC ERROR: Table already indexed" << endl;
         return false;
     }
+
+    if (parsedQuery.indexingStrategy == HASH && stoi(tokenizedQuery[8]) <= 1)
+    {
+        cout << "SEMANTIC ERROR: Buckets cannot be lower than 1" << endl;
+        return false;
+    }
+
+    if (parsedQuery.indexingStrategy == BTREE)
+        if (stoi(tokenizedQuery[8]) < 3 || stoi(tokenizedQuery[8]) > 1000)
+        {
+            cout << "SEMANTIC ERROR: Fanout cannot be lower than 3 or higher than 1000" << endl;
+            return false;
+        }
+
     return true;
 }
 
