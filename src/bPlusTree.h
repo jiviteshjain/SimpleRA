@@ -209,12 +209,13 @@ class BPlusTree {
     void destroy_tree();
 
     // CONSTRUCTORS AND DESTRUCTORS
-    BPlusTree(int order = DEFAULT_ORDER, bool verbose = false) {
+    BPlusTree(int order = DEFAULT_ORDER, bool verbose = false, int reserve = 0) {
         this->root = nullptr;
         this->que = nullptr;
 
         this->order = order;
         this->verbose = verbose;
+        this->reserve = reserve;
     }
 
     ~BPlusTree() {

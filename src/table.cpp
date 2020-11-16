@@ -1413,8 +1413,7 @@ void Table::bTreeIndex(const string& columnName, int fanout) {
     // TODO: check metadata match
 
     // TODO: Figure out order and reserve
-    int reserve = DEFAULT_INDEX_RESERVE;
-    this->bTree.reset(fanout, reserve);
+    this->bTree.reset(fanout, DEFAULT_INDEX_RESERVE);
     
     // Insert into B+Tree and set bucket ranges
     this->bucketRanges.resize(this->blocksInBuckets.size());

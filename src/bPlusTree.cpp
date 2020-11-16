@@ -411,7 +411,7 @@ Node *BPlusTree::insert_into_leaf_after_splitting(Node *leaf, int key, Record *p
         leaf->num_keys++;
     }
 
-    new_leaf = new Node(true, order - split + 1); // split < order guaranteed. Space for next leaf pointer
+    new_leaf = new Node(true, order - split + 1, this->reserve); // split < order guaranteed. Space for next leaf pointer
 
     for (i = split, j = 0; i < order; i++, j++) {
         new_leaf->pointers[j] = temp_pointers[i];
@@ -501,7 +501,7 @@ Node *BPlusTree::insert_into_node_after_splitting(Node *old_node, int left_index
     old_node->pointers[i] = temp_pointers[i];
     k_prime = temp_keys[split - 1];
 
-    new_node = new Node(false, order - split + 1);
+    new_node = new Node(false, order - split + 1, this->reserve);
     for (++i, j = 0; i < order; i++, j++) {
         new_node->pointers[j] = temp_pointers[i];
         new_node->keys[j] = temp_keys[i];
@@ -564,7 +564,7 @@ Node *BPlusTree::insert_into_parent(Node *left, int key, Node *right) {
  * the new root.
  */
 Node *BPlusTree::insert_into_new_root(Node *left, int key, Node *right) {
-    Node *root = new Node(false, 2);
+    Node *root = new Node(false, 2, this->reserve);
     root->keys[0] = key;
     root->pointers[0] = left;
     root->pointers[1] = right;
@@ -579,7 +579,7 @@ Node *BPlusTree::insert_into_new_root(Node *left, int key, Node *right) {
  * start a new tree.
  */
 Node *BPlusTree::start_new_tree(int key, Record *pointer) {
-    Node *root = new Node(true, 2);  // new never returns nullptr
+    Node *root = new Node(true, 2, this->reserve);  // new never returns nullptr
     root->keys[0] = key;
     root->pointers[0] = pointer;
     root->pointers[1] = nullptr;

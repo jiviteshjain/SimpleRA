@@ -14,7 +14,7 @@ enum IndexingStrategy {
 
 #define INIT_INDEXED_CAPACITY 0.7
 #define REINDEX_MIN_THRESH 0.3
-#define DEFAULT_INDEX_RESERVE 30
+#define DEFAULT_INDEX_RESERVE 10
 
 /**
  * @brief The Table class holds all information related to a loaded table. It
