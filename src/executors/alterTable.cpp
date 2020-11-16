@@ -52,7 +52,7 @@ void executeALTERTABLE()
     Table *table = tableCatalogue.getTable(parsedQuery.alterTableRelationName);
 
     vector<string> columns = table->columns;
-    int columnIndex;
+    int columnIndex = -2;
     if (parsedQuery.alterTableOperationName == "ADD")
         columns.push_back(parsedQuery.alterTableColumnName);
     else if (parsedQuery.alterTableOperationName == "DELETE")
@@ -69,6 +69,17 @@ void executeALTERTABLE()
     Table *newTable = new Table(parsedQuery.alterTableRelationName + "_altertemp", columns);
     tableCatalogue.insertTable(newTable);
     newTable->blockCount = 0;
+
+    bool btree = false;
+    int fanout;
+    string btreeColName;
+    if (table->indexingStrategy == BTREE && table->indexedColumn != columnIndex)
+    {
+        btree = true;
+        fanout = table->bTree.ord();
+        btreeColName = table->getIndexedColumn();
+        table->clearIndex();
+    }
 
     if (!table->indexed || (table->indexingStrategy == HASH && table->indexedColumn == columnIndex))
     {
@@ -200,12 +211,16 @@ void executeALTERTABLE()
         
         tableCatalogue.replaceTableName(newTable->tableName, tableName);
         newTable->tableName = tableName;
+    
+        if (btree)
+            newTable->bTreeIndex(btreeColName, fanout);
     }
     else
     {
         cout << "Empty Table" << endl;
-        newTable->unload();
-        delete newTable;
+        tableCatalogue.deleteTable(newTable->tableName);
+        // newTable->unload();
+        // delete newTable;
     }
     return;
 }
