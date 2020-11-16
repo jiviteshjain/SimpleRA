@@ -93,11 +93,8 @@ bool Matrix::blockify() {
 
 
         fin.close();
-        return true;
     }
-
-
-
+    return true;
 }
 
 void Matrix::initCalc(const string& line) {
