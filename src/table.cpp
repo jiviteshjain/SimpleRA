@@ -47,8 +47,8 @@ Table::Table(string tableName, vector<string> columns) {
     // this->writeRow<string>(columns);
 }
 
-inline float Table::density() {
-    return ((float)this->rowCount)/(this->blockCount * this->maxRowsPerBlock);
+inline float Table::density(int offsetRows, int offsetBlocks) {
+    return ((float)(this->rowCount + offsetRows))/((this->blockCount + offsetBlocks) * this->maxRowsPerBlock);
 }
 
 /**
@@ -509,6 +509,7 @@ bool Table::insertIntoHashBucket(const vector<int>& row, int bucket) {
 
     if (!found) {
         this->blocksInBuckets[bucket].push_back(1);
+        this->blockCount++;
         chainCount = blocksInBuckets[bucket].size() - 1;
     }
 
@@ -592,7 +593,7 @@ bool Table::insert(const vector<int>& row) {
         // split
         // rowCount is updated later, so +1
         // we want to compare it with the original blockCount
-        if ((this->rowCount + 1) / this->blockCount > HASH_DENSITY_MAX) {
+        if (this->density(1) > HASH_DENSITY_MAX) {
             this->linearHashSplit();
         }
 
@@ -729,6 +730,11 @@ void Table::cleanupBlocks(int bucket) {
         } else {
             break;
         }
+    }
+
+    this->blockCount = 0;
+    for (auto &b: this->blocksInBuckets) {
+        this->blockCount += b.size();
     }
 }
 
@@ -1003,9 +1009,7 @@ bool Table::remove(const vector<int>& row) {
 
 
             // combine only on underflow
-            // rowCount is updated later, so -foundCount
-            // we want to compare it with the original blockCount
-            if ((this->rowCount / this->blockCount) < HASH_DENSITY_MIN) {
+            if (this->density() < HASH_DENSITY_MIN) {
                 this->linearHashCombine();
             }
         }

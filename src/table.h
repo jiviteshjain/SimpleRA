@@ -75,7 +75,7 @@ class Table {
     // FOR INDEXING
     // We don't use rowsPerBlockCount, because the blocks now have overflow chains and cannot be numbered sequentially. Instead use blocksInBuckets.
     vector<vector<int>> blocksInBuckets;
-    float density();
+    float density(int offsetRows = 0, int offsetBlocks = 0);
     void clearIndex();
 
     // FOR LINEAR HASHING
