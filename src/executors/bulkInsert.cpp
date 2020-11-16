@@ -71,7 +71,7 @@ void executeBULKINSERT()
         vector<vector<int>> rowsInPage(table->maxRowsPerBlock, row);
         int pageCounter = 0;
         
-        if (table->maxRowsPerBlock - table->rowsPerBlockCount[table->blockCount - 1] == 0)
+        if (table->maxRowsPerBlock - table->rowsPerBlockCount[table->blockCount - 1] != 0)
         {
             while (getline(fin, line))
             {
@@ -125,7 +125,7 @@ void executeBULKINSERT()
             rowsInLastPage.resize(table->rowsPerBlockCount[table->blockCount - 1]);
             rowsInLastPage.insert(std::end(rowsInLastPage), std::begin(rowsInPage), std::end(rowsInPage));
             bufferManager.writeTablePage(table->tableName, table->blockCount - 1, rowsInLastPage, table->rowsPerBlockCount[table->blockCount - 1] + pageCounter);
-            table->rowsPerBlockCount[table->blockCount - 1] = table->maxRowsPerBlock;
+            table->rowsPerBlockCount[table->blockCount - 1] = table->rowsPerBlockCount[table->blockCount - 1] + pageCounter;
             pageCounter = 0;
         }
         else if (pageCounter < table->maxRowsPerBlock)
