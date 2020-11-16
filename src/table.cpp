@@ -43,7 +43,7 @@ Table::Table(string tableName, vector<string> columns) {
     // this->valuesInColumns = vector<map<int, long long>> (this->columnCount);
     this->smallestInColumns = vector<int> (this->columnCount);
     this->largestInColumns = vector<int> (this->columnCount);
-    // this->maxRowsPerBlock = 2; // DEBUG
+    // this->maxRowsPerBlock = 3; // DEBUG
     // this->writeRow<string>(columns);
 }
 
@@ -96,7 +96,7 @@ bool Table::extractColumnNames(string firstLine) {
     }
     this->columnCount = this->columns.size();
     this->maxRowsPerBlock = (uint)((BLOCK_SIZE * 1000) / (sizeof(int) * this->columnCount));
-    // this->maxRowsPerBlock = 2; // DEBUG
+    // this->maxRowsPerBlock = 3; // DEBUG
     return true;
 }
 
@@ -1018,78 +1018,98 @@ bool Table::remove(const vector<int>& row) {
 
         // check corresponding bucket
         // does not use cursor because have to modify page if row was actually found
-        auto record = this->bTree.find(row[this->indexedColumn], nullptr); // not out of range
+        int key = row[this->indexedColumn];
+        auto record = this->bTree.find(key, nullptr); // not out of range
         if (record == nullptr) {
             return false;
         }
-        int bucket = record->val();
+        int bucket_i = record->val();
+        int bucket_f = bucket_i;
+        while (bucket_f < this->blocksInBuckets.size()) {
+            if (this->bucketRanges[bucket_f].first <= key) {
+                bucket_f++;
+            } else {
+                break;
+            }
+        }
+        this->bTree.del(key); // will be inserted later if reqd
+        // donot use record after this
 
-        // to avoid repeated constructor and destructor calls
-        vector<vector<int>> data;
-        vector<vector<int>>::iterator it;
+        for (int bucket = bucket_f - 1; bucket >= bucket_i; bucket--) {
+            long long foundInBucketCount = 0;
 
-        int minn = INT_MAX, maxx = INT_MIN;
-        bool anotherOneExists = false;
-        bool somethingElseExists = false;
+            int minn = INT_MAX, maxx = INT_MIN;
+            bool anotherOneExists = false; // same key different row exists
+            bool somethingElseExists = false; // the bucket is not empty after deletion
 
-        for (int i = 0; i < this->blocksInBuckets[bucket].size(); i++) {
-            long long foundInPage = 0;
+            vector<vector<int>> data;
+            vector<vector<int>>::iterator it;
+            // to avoid repeated constructor and destructor calls
+            for (int i = 0; i < this->blocksInBuckets[bucket].size(); i++) {
+                long long foundInPage = 0;
 
-            data = bufferManager.getHashPage(this->tableName, bucket, i).data;
-            it = data.begin();
+                data = bufferManager.getHashPage(this->tableName, bucket, i).data;
+                it = data.begin();
 
-            while (it != data.end()) {
-                if (*it == row) {
-                    it = data.erase(it);
-                    foundInPage++;
-                } else {
-                    minn = min(minn, it->operator[](this->indexedColumn));
-                    maxx = max(maxx, it->operator[](this->indexedColumn));
-                    anotherOneExists |= (it->operator[](this->indexedColumn) == row[this->indexedColumn]);
-                    it++;
-                    somethingElseExists = true;
+                while (it != data.end()) {
+                    if (*it == row) {
+                        it = data.erase(it);
+                        foundInPage++;
+                    } else {
+                        minn = min(minn, it->operator[](this->indexedColumn));
+                        maxx = max(maxx, it->operator[](this->indexedColumn));
+                        anotherOneExists |= (it->operator[](this->indexedColumn) == key);
+                        somethingElseExists = true;
+                        it++;
+                    }
+                }
+
+                if (foundInPage > 0) {
+                    this->blocksInBuckets[bucket][i] = data.size();
+
+                    if (data.size() > 0) {
+                        bufferManager.writeHashPage(this->tableName, bucket, i, data);
+                    } else {
+                        bufferManager.deleteHashFile(this->tableName, bucket, i);
+                    }
+
+                    foundInBucketCount= foundInBucketCount + foundInPage;
                 }
             }
 
-            if (foundInPage > 0) {
-                this->blocksInBuckets[bucket][i] = data.size();
+            if (anotherOneExists) {
+                this->bTree.insert(key, bucket);
+            }
 
-                if (data.size() > 0) {
-                    bufferManager.writeHashPage(this->tableName, bucket, i, data);
-                } else {
-                    bufferManager.deleteHashFile(this->tableName, bucket, i);
+            if (foundInBucketCount > 0) {
+                this->rowCount = this->rowCount - foundInBucketCount;
+                
+                if (somethingElseExists) {
+                    this->bucketRanges[bucket] = make_pair(minn, maxx);
                 }
 
-                foundCount = foundCount + foundInPage;
+                // if (!anotherOneExists) {
+                //     this->bTree.del(row[this->indexedColumn]);
+                // }
+
+                // merge blocks that can be merged
+                this->mergeBlocks(bucket); 
+                
+                // clean up pages of size 0
+                this->cleanupBlocks(bucket);
+
+                foundCount += foundInBucketCount;
+
             }
         }
 
-        if (foundCount > 0) {
-            this->rowCount = this->rowCount - foundCount;
-            
-            if (somethingElseExists) {
-                this->bucketRanges[bucket] = make_pair(minn, maxx);
-            }
+        // under extreme circumstances, consider reindexing
+        if (this->density() < REINDEX_MIN_THRESH) {
+            int colIndex = this->indexedColumn;
+            int fanout = this->bTree.ord();
 
-            if (!anotherOneExists) {
-                this->bTree.del(row[this->indexedColumn]);
-            }
-
-            // merge blocks that can be merged
-            this->mergeBlocks(bucket); 
-            
-            // clean up pages of size 0
-            this->cleanupBlocks(bucket);
-
-            // under extreme circumstances, consider reindexing
-            if (this->density() < REINDEX_MIN_THRESH) {
-                int colIndex = this->indexedColumn;
-                int fanout = this->bTree.ord();
-
-                this->clearIndex();
-                this->bTreeIndex(this->columns[colIndex], fanout);
-            }
-
+            this->clearIndex();
+            this->bTreeIndex(this->columns[colIndex], fanout);
         }
     }
 
