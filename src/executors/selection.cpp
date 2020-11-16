@@ -348,4 +348,136 @@ void executeSELECTION()
             return;
         }
     }
+    else if (table->indexingStrategy == BTREE)
+    {
+        if ((table->indexed && table->getIndexedColumn() != parsedQuery.selectionFirstColumnName) || (parsedQuery.selectType == COLUMN) || (parsedQuery.selectionBinaryOperator == NOT_EQUAL))
+        {
+            Cursor cursor = table->getCursor(0, 0);
+            vector<int> row = cursor.getNextInAllBuckets();
+            vector<vector<int>> rows;
+            int secondColumnIndex;
+            if (parsedQuery.selectType == COLUMN)
+                secondColumnIndex = table->getColumnIndex(parsedQuery.selectionSecondColumnName);
+            while (!row.empty())
+            {
+                int value1 = row[firstColumnIndex];
+                int value2;
+                if (parsedQuery.selectType == INT_LITERAL)
+                    value2 = parsedQuery.selectionIntLiteral;
+                else
+                    value2 = row[secondColumnIndex];
+                if (evaluateBinOp(value1, value2, parsedQuery.selectionBinaryOperator))
+                {
+                    rows.push_back(row);
+                    resultantTable->updateStatistics(row);
+                }
+                if (rows.size() == resultantTable->maxRowsPerBlock)
+                {
+                    resultantTable->rowsPerBlockCount.emplace_back(rows.size());
+                    bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
+                    resultantTable->blockCount++;
+                    rows.clear();
+                }
+                row = cursor.getNextInAllBuckets();
+            }
+
+            if (rows.size())
+            {
+                resultantTable->rowsPerBlockCount.emplace_back(rows.size());
+                bufferManager.writeTablePage(resultantTable->tableName, resultantTable->blockCount, rows, rows.size());
+                resultantTable->blockCount++;
+                rows.clear();
+            }
+            saveResult(resultantTable);
+        }
+        else if (parsedQuery.selectionBinaryOperator == EQUAL)
+        {
+            auto record = table->bTree.find(parsedQuery.selectionIntLiteral, nullptr);
+            if (record == nullptr) 
+            {
+                saveResult(resultantTable);
+                return;
+            }
+            
+            int bucket_i = record->val();
+            int bucket_f = bucket_i;
+            while (bucket_f < table->blocksInBuckets.size())
+            {
+                if (table->bucketRanges[bucket_f].first <= parsedQuery.selectionIntLiteral)
+                    bucket_f++;
+                else
+                    break;
+            }
+
+            for (int bucket = bucket_f - 1; bucket >= bucket_i; bucket--) 
+                retrieveResult(table, resultantTable, bucket);
+            
+            saveResult(resultantTable);
+            return;
+        }
+        else if (parsedQuery.selectionBinaryOperator == LESS_THAN)
+        {
+            for (int i = 0; i < table->blocksInBuckets.size(); i++)
+            {
+                if (table->blocksInBuckets[i].size())
+                {
+                    if (table->bucketRanges[i].first < parsedQuery.selectionIntLiteral)
+                        retrieveResult(table, resultantTable, i);
+                    else
+                        break;
+                }
+            }
+
+            saveResult(resultantTable);
+            return;
+        }
+        else if (parsedQuery.selectionBinaryOperator == LEQ)
+        {
+            for (int i = 0; i < table->blocksInBuckets.size(); i++)
+            {
+                if (table->blocksInBuckets[i].size())
+                {
+                    if (table->bucketRanges[i].first <= parsedQuery.selectionIntLiteral)
+                        retrieveResult(table, resultantTable, i);
+                    else
+                        break;
+                }
+            }   
+
+            saveResult(resultantTable);
+            return;
+        }
+        else if (parsedQuery.selectionBinaryOperator == GREATER_THAN)
+        {
+            for (int i = table->blocksInBuckets.size() - 1; i >= 0; i--)
+            {
+                if (table->blocksInBuckets[i].size())
+                {
+                    if (table->bucketRanges[i].second > parsedQuery.selectionIntLiteral)
+                        retrieveResult(table, resultantTable, i);
+                    else
+                        break;
+                }
+            }
+
+            saveResult(resultantTable);
+            return;
+        }
+        else if (parsedQuery.selectionBinaryOperator == GEQ)
+        {
+            for (int i = table->blocksInBuckets.size() - 1; i >= 0; i--)
+            {
+                if (table->blocksInBuckets[i].size())
+                {
+                    if (table->bucketRanges[i].second >= parsedQuery.selectionIntLiteral)
+                        retrieveResult(table, resultantTable, i);
+                    else
+                        break;
+                }
+            } 
+
+            saveResult(resultantTable);
+            return;
+        }
+    }
 }
