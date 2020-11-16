@@ -66,7 +66,7 @@ void executeGROUPBY()
         cursor = table->getCursor();
         row = cursor.getNext();
     }
-    else if (table->indexingStrategy == HASH)
+    else
     {
         cursor = table->getCursor(0, 0);
         row = cursor.getNextInAllBuckets();
@@ -95,7 +95,7 @@ void executeGROUPBY()
 
         if (!table->indexed)
             row = cursor.getNext();
-        else if (table->indexingStrategy == HASH)
+        else
             row = cursor.getNextInAllBuckets();
     }
 
