@@ -18,6 +18,7 @@ public:
     TableCatalogue() {}
     void insertTable(Table* table);
     void deleteTable(string tableName);
+    void replaceTableName(string oldTableName, string newTableName);
     Table* getTable(string tableName);
     bool isTable(string tableName);
     bool isColumnFromTable(string columnName, string tableName);

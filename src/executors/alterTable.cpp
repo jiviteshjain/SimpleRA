@@ -67,6 +67,7 @@ void executeALTERTABLE()
     }
 
     Table *newTable = new Table(parsedQuery.alterTableRelationName + "_altertemp", columns);
+    tableCatalogue.insertTable(newTable);
     newTable->blockCount = 0;
 
     if (!table->indexed || (table->indexingStrategy == HASH && table->indexedColumn == columnIndex))
@@ -194,8 +195,8 @@ void executeALTERTABLE()
                 }
         }
         
+        tableCatalogue.replaceTableName(newTable->tableName, tableName);
         newTable->tableName = tableName;
-        tableCatalogue.insertTable(newTable);
     }
     else
     {

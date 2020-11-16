@@ -12,6 +12,12 @@ void TableCatalogue::deleteTable(string tableName)
     delete this->tables[tableName];
     this->tables.erase(tableName);
 }
+void TableCatalogue::replaceTableName(string oldTableName, string newTableName)
+{
+    logger.log("TableCatalogue::replaceTableName"); 
+    this->tables[newTableName] = this->tables[oldTableName];
+    this->tables.erase(oldTableName);
+}
 Table* TableCatalogue::getTable(string tableName)
 {
     logger.log("TableCatalogue::getTable"); 
