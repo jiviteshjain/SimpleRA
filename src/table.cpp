@@ -801,6 +801,7 @@ void Table::clearIndex()
 
     this->indexed = false;
     this->indexingStrategy = NOTHING;
+    this->indexedColumn = -1;
 
     return;
 }
