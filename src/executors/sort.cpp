@@ -258,7 +258,7 @@ void executeSORT()
         bufferManager.deleteTableFile(resultantTable->tableName, i);
     }
 
-    resultantTable->blockCount = originalBlockCount;
+    resultantTable->blockCount = finalBlocksWritten;
     resultantTable->rowsPerBlockCount.erase(resultantTable->rowsPerBlockCount.begin() + resultantTable->blockCount, resultantTable->rowsPerBlockCount.end());
     return;
 }
